@@ -48,6 +48,7 @@ public class LoginController {
             loginService.createSession(request, user.getUserId());
             return new ResponseEntity<>(HttpStatus.OK);
         }
+
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 }
