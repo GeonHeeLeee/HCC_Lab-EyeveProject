@@ -9,7 +9,7 @@ import lombok.Setter;
 import javax.persistence.*;
 
 @Entity
-@Getter @Setter
+@Getter
 @RequiredArgsConstructor
 public class User {
     @Id
@@ -24,4 +24,8 @@ public class User {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "roomId")
     private Rooms room;
+
+    public void setRoom(Rooms room) {
+        this.room = room;
+    }
 }
