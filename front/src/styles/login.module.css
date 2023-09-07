@@ -1,0 +1,162 @@
+* {
+  padding: 0;
+  margin: 0;
+  border: none;
+}
+
+:root {
+  --maincolor: #6a24fe;
+}
+
+/* 로그인 화면 */
+
+.loginBox {
+  background-color: var(--maincolor);
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loginWrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  /* margin-top: 100px; */
+
+  width: 400px;
+  height: 600px;
+  padding: 40px;
+  box-sizing: border-box;
+  background-color: #f8f8f8;
+  border-radius: 6px;
+}
+
+.loginWrapper > h2 {
+  font-size: 40px;
+  color: #1852d0;
+  margin-bottom: 110px;
+}
+
+.loginWrapper > h3 {
+  margin-top: 5px;
+  margin-left: 10px;
+  font-size: 13px;
+  color: var(--maincolor);
+  cursor: pointer;
+}
+
+.loginForm > input {
+  width: 100%;
+  height: 48px;
+  padding: 0 10px;
+  margin: 5px 0;
+
+  box-sizing: border-box;
+  border-radius: 6px;
+}
+
+.loginForm > input ::placeholder {
+  color: #d2d2d2;
+}
+
+.loginForm > input[type='submit'] {
+  color: #fff;
+  font-size: 16px;
+  background-color: var(--maincolor);
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+/* 회원가입 화면 */
+
+.signUpBox {
+  width: 100%;
+  height: 100%;
+  padding: 40px;
+  box-sizing: border-box;
+
+  background-color: rgba(0, 0, 0, 0.4);
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.signUpWrapper {
+  position: absolute;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  border: none;
+  color: rgba((0, 0, 0, 0.7), green, blue, alpha);
+
+  width: 300px;
+  background-color: #f8f8f8;
+  padding: 40px;
+
+  border-radius: 6px;
+}
+
+.signUpWrapper > h2 {
+  font-size: 24px;
+  color: #6a24fe;
+  margin-bottom: 20px;
+}
+
+.signupForm > input {
+  width: 100%;
+  height: 48px;
+  padding: 0 10px;
+  margin: 5px 0;
+
+  box-sizing: border-box;
+  border-radius: 6px;
+}
+
+/* radio box 스타일 지정해주기  */
+.signupForm > label {
+  margin-right: 100px;
+
+  /* padding: 10px; */
+}
+
+.signupForm > label > input {
+  /* margin-right: 3px; */
+}
+
+.signupForm > input ::placeholder {
+  color: #d2d2d2;
+}
+
+.signupForm > input[type='submit'] {
+  color: #fff;
+  font-size: 16px;
+  background-color: #6a24fe;
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+.signupForm > input[type='submit'] :hover {
+  cursor: pointer;
+}
+
+.closeButton {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  border: none;
+  color: rgba(0, 0, 0, 0.7);
+  background-color: transparent;
+  font-size: 20px;
+  cursor: pointer;
+}
