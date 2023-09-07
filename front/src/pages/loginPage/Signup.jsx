@@ -8,7 +8,7 @@ import { hide } from '../../store/modules/showSignupSlice';
 
 import styles from '../../styles/login.module.css';
 
-const API = 'http://localhost:8080';
+const API = 'http://localhost:8081';
 
 /*
 회원가입 할 때, 서버와 통신해서 해당 결과가 성공이냐 실패냐에 따라 return 값을 다르게 하여 handleSignupSubmit 함수에서 성공 실패 처리
@@ -134,7 +134,7 @@ function Signup() {
             <input
               type='radio'
               name='termsAndConditions'
-              value='professor'
+              value='PROFESSOR'
               onChange={(e) => {
                 setSignupState({
                   ...signupState,
@@ -150,7 +150,7 @@ function Signup() {
             <input
               type='radio'
               name='termsAndConditions'
-              value='student'
+              value='STUDENT'
               onChange={(e) => {
                 setSignupState({
                   ...signupState,
