@@ -29,6 +29,8 @@ public class LoginController {
     @PostMapping
     public ResponseEntity<Void> registerUser(@RequestBody User user) {
         boolean registerUserResult = loginService.registerUser(user);
+        log.info("회원 가입 사용자 이름 : " + user.getUserId() + ", 비밀번호 : " + user.getUserPassword());
+        log.info("회원 가입 성공 여부 : " + registerUserResult);
         return registerUserResult ?
                 new ResponseEntity<>(HttpStatus.OK) : new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
@@ -48,6 +50,9 @@ public class LoginController {
             loginService.createSession(request, user.getUserId());
             return new ResponseEntity<>(HttpStatus.OK);
         }
+
+        log.info("로그인 사용자 이름 : " + user.getUserId() + ", 비밀번호 : " + user.getUserPassword());
+        log.info("로그인 성공 여부 : " + loginCheckResult);
 
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
