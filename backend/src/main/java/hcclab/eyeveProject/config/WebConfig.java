@@ -1,10 +1,14 @@
 package hcclab.eyeveProject.config;
 
 import hcclab.eyeveProject.interceptor.LoginInterceptor;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+@Configuration
 public class WebConfig implements WebMvcConfigurer {
 
     /*
@@ -12,13 +16,14 @@ public class WebConfig implements WebMvcConfigurer {
      */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-
         registry.addMapping("/**")
                 .allowedOrigins("http://localhost:3000")
-                .allowedMethods("OPTIONS","GET","POST","PUT","DELETE");
+                .allowedMethods("OPTIONS","GET","POST","PUT","DELETE")
+                .allowCredentials(true);
     }
 
-    /*
+    /*y
+
     Interceptor 등록, 세션 처리 메서드
      */
     @Override
