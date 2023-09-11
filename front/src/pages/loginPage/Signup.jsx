@@ -10,18 +10,10 @@ import styles from '../../styles/login.module.css';
 
 import API from '../../services/api';
 
-/*
-회원가입 할 때, 서버와 통신해서 해당 결과가 성공이냐 실패냐에 따라 return 값을 다르게 하여 handleSignupSubmit 함수에서 성공 실패 처리
-*/
-
 // 회원가입 정보 서버로 전송
 async function sendSignup(userSignupData) {
   try {
     const { data, status } = await axios.post(`${API}/users`, userSignupData);
-
-    console.log(JSON.stringify(data, null, 4));
-    // alert('회원가입 성공!');
-    console.log(status); // 상태 코드 가져옴 ex) 200
 
     if (status === 400) {
       return false;
@@ -64,8 +56,6 @@ function Signup() {
 
     const data = sendSignup(signupState);
 
-    console.log(data.data);
-
     data.then((res) => {
       console.log(res);
       if (res === false) {
@@ -101,7 +91,6 @@ function Signup() {
                 ...signupState,
                 userName: e.target.value,
               });
-              console.log(signupState);
             }}
           />
           <input
@@ -114,7 +103,6 @@ function Signup() {
                 ...signupState,
                 userId: e.target.value,
               });
-              console.log(signupState);
             }}
           />
           <input
@@ -127,7 +115,6 @@ function Signup() {
                 ...signupState,
                 userPassword: e.target.value,
               });
-              console.log(signupState);
             }}
           />
           <label>
@@ -140,8 +127,6 @@ function Signup() {
                   ...signupState,
                   userType: e.target.value,
                 });
-
-                console.log(signupState.userType);
               }}
             />
             교수자
@@ -156,8 +141,6 @@ function Signup() {
                   ...signupState,
                   userType: e.target.value,
                 });
-
-                console.log(signupState.userType);
               }}
             />
             학생
