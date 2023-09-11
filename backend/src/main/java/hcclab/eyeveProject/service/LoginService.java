@@ -53,6 +53,10 @@ public class LoginService {
         return findUser.isPresent() && findUser.get().getUserPassword().equals(user.getUserPassword());
     }
 
+    public String getUserNameById(String userId) {
+        return userRepository.findById(userId).getUserName();
+    }
+
     /*
     세션 생성 메서드
     - 해당 유저 아이디로 세션을 생성하고 넣어줌

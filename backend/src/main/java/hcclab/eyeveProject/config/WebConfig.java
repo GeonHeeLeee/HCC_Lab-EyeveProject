@@ -22,8 +22,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowCredentials(true);
     }
 
-    /*y
-
+    /*
     Interceptor 등록, 세션 처리 메서드
      */
     @Override

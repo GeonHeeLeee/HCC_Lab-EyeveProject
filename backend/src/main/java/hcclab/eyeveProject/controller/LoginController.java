@@ -41,14 +41,16 @@ public class LoginController {
     - 로그인 실패 시 : 세션 생성 하지 않고 400 Bad Request 반환
      */
     @PostMapping("/login")
-    public ResponseEntity<Void> loginUser(@RequestBody User user,
+    public ResponseEntity<String> loginUser(@RequestBody User user,
                                           HttpServletRequest request) {
 
         boolean loginCheckResult = loginService.loginCheck(user);
 
         if (loginCheckResult) {
             loginService.createSession(request, user.getUserId());
-            return new ResponseEntity<>(HttpStatus.OK);
+            log.info("로그인 사용자 이름 : " + user.getUserId() + ", 비밀번호 : " + user.getUserPassword());
+            log.info("로그인 성공 여부 : " + loginCheckResult);
+            return new ResponseEntity<String>(loginService.getUserNameById(user.getUserId()), HttpStatus.OK);
         }
 
         log.info("로그인 사용자 이름 : " + user.getUserId() + ", 비밀번호 : " + user.getUserPassword());
