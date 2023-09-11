@@ -5,8 +5,11 @@ import { useState, useEffect } from 'react';
 
 import { useSelector, useDispatch } from 'react-redux';
 
+import axios from 'axios';
+
 import Login from './Login';
 import Signup from './Signup';
+import API from '../../services/api';
 
 /*
 
@@ -33,7 +36,9 @@ import Signup from './Signup';
 */
 
 function LoginPage() {
-  // useEffect(() => {}, []);
+  useEffect(() => {
+    axios.get('');
+  }, []);
   const showSignup = useSelector((state) => state.showSignup.value);
 
   return (
