@@ -53,6 +53,10 @@ public class LoginService {
         return findUser.isPresent() && findUser.get().getUserPassword().equals(user.getUserPassword());
     }
 
+    /*
+    userName get 메서드
+    - userId로 해당 유저의 userName 가져오기
+     */
     public String getUserNameById(String userId) {
         return userRepository.findById(userId).getUserName();
     }
