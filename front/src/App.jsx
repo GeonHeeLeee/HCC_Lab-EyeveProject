@@ -4,7 +4,7 @@ import './App.css';
 import { Route, Routes } from 'react-router-dom';
 
 import LoginPage from './pages/loginPage/LoginPage';
-import PrivateRoute from './components/PrivateRoute';
+
 import MyPage from './pages/myPage/MyPage';
 
 function App() {

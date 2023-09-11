@@ -76,7 +76,7 @@ function Login() {
           dispatch(login());
           dispatch(setLoginUsername(loginState.userId));
 
-          alert(`안녕하세요 ${loginState.userId}님`);
+          alert(`안녕하세요 ${localStorage.getItem('userName')}님`);
 
           // localstorage에 세선 아이디 저장
           // localStorage.setItem('sessionId',);
@@ -114,8 +114,6 @@ function Login() {
                 ...loginState,
                 userId: e.target.value,
               });
-
-              console.log(loginState);
             }}
           />
           <input
@@ -128,8 +126,6 @@ function Login() {
                 ...loginState,
                 userPassword: e.target.value,
               });
-
-              console.log(loginState);
             }}
           />
           <input type='submit' value='Login' onClick={handleLoginSubmit} />
