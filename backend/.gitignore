@@ -37,5 +37,4 @@ out/
 .vscode/
 
 ## front ###
-node_modules/
 .cache/
