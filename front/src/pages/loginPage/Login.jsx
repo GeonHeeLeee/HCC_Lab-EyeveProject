@@ -11,12 +11,14 @@ import axios from 'axios';
 
 import { useNavigate } from 'react-router-dom';
 
-const API = 'http://localhost:8081';
+import API from '../../services/api';
 
 function Login() {
   const dispatch = useDispatch();
   const isLogin = useSelector((state) => state.isLogin.value);
   const navigate = useNavigate();
+
+  // useEffect
 
   console.log(isLogin);
   const [loginState, setLoginState] = useState({
@@ -57,23 +59,27 @@ function Login() {
 
         if (res.status === 400) {
           // 로그인 실패
-
           return alert('로그인 실패.');
-        } else if (res.state === 200) {
+        } else if (res.status === 200) {
           // 로그인 성공
-
           // 헤더로부터 sessionId 가져오기
-          let accessToken = res.headers['authorization'];
+          // let accessToken = res.headers['set-cookie'];
 
-          console.log(accessToken);
+          // 로그인 성공 시, localStorage에 userName 저장
+
+          console.log(res.data);
+          localStorage.setItem('userName', res.data);
+
           console.log('userName: ', res.data.userName);
           console.log('userId: ', res.data.userId);
 
           dispatch(login());
           dispatch(setLoginUsername(loginState.userId));
 
+          alert(`안녕하세요 ${loginState.userId}님`);
+
           // localstorage에 세선 아이디 저장
-          localStorage.setItem('sessionId', accessToken);
+          // localStorage.setItem('sessionId',);
 
           navigate('/mypage');
 

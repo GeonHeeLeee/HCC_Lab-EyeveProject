@@ -8,7 +8,7 @@ import { hide } from '../../store/modules/showSignupSlice';
 
 import styles from '../../styles/login.module.css';
 
-const API = 'http://localhost:8081';
+import API from '../../services/api';
 
 /*
 회원가입 할 때, 서버와 통신해서 해당 결과가 성공이냐 실패냐에 따라 return 값을 다르게 하여 handleSignupSubmit 함수에서 성공 실패 처리
@@ -72,7 +72,7 @@ function Signup() {
         alert('회원가입 실패');
       } else {
         alert(
-          `반갑습니다. ${signupState.username} 님\n회원가입이 완료되었습니다. `
+          `반갑습니다. ${signupState.userName} 님\n회원가입이 완료되었습니다. `
         );
         dispatch(hide());
       }
