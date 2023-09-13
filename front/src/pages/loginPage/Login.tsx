@@ -27,7 +27,7 @@ function Login() {
     userPassword: '',
   });
 
-  const handleLoginSubmit = (e: SubmitEvent) => {
+  const handleLoginSubmit = (e: React.MouseEvent) => {
     e.preventDefault();
 
     if (!loginState.userId) {
@@ -130,7 +130,7 @@ function Login() {
             }}
           />
           {/*<input type='submit' value='Login' onClick={handleLoginSubmit} />*/}
-          <input type='submit' value='Login'  />
+          <input type='submit' value='Login' onClick={handleLoginSubmit} />
         </form>
         <h3
           onClick={() => {

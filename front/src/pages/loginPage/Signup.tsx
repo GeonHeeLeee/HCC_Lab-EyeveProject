@@ -42,7 +42,7 @@ function Signup() {
     userType: '',
   });
 
-  const handleSignupSubmit = (event: SubmitEvent) => {
+  const handleSignupSubmit = (event: React.MouseEvent) => {
     event.preventDefault();
 
     if (!signupState.userName) {
@@ -107,7 +107,7 @@ function Signup() {
                 }}
             />
             <input
-                type='userPassword'
+                type='password'
                 name='userPassword'
                 placeholder='Password'
                 value={signupState.userPassword}
@@ -146,8 +146,9 @@ function Signup() {
               />
               학생
             </label>
+            {/*<button type='submit' value='SignUp' onClick={handleSignupSubmit}>회원가입</button>*/}
+            <input type='submit' value='SignUp' onClick={handleSignupSubmit} />
 
-            {/*<input type='submit' value='SignUp' onClick={handleSignupSubmit}/>*/}
           </form>
         </div>
       </div>

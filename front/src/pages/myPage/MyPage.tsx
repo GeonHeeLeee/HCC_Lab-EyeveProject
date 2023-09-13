@@ -45,7 +45,7 @@ function MyPage() {
 
     checkUserAuth();
   }, []);
-  return <>render && <div>안녕하세요 {localStorage.getItem('userName')}님</div></>;
+  return <>{render && <div>안녕하세요 {localStorage.getItem('userName')}님</div>}</>;
 }
 
 export default MyPage;
