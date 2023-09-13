@@ -70,12 +70,12 @@ function LoginPage() {
 
   return (
       <>
-        render && (
-        <div>
-          <Login/>
-          {showSignup && <Signup/>}
-        </div>
-        )
+        {render && (
+            <div>
+              <Login/>
+              {showSignup && <Signup/>}
+            </div>
+        )}
       </>
   );
 }

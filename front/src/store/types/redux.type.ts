@@ -1,16 +1,16 @@
-export type IsLoginState = {
+export type IsLogin = {
   value: boolean;
 }
 export type LoginUsername = {
-  value: string;
+  username: string;
 }
 
 export type ShowSignup = {
-  value: string;
+  value: boolean;
 }
 
 export type RootState = {
-  isLoginState: IsLoginState;
+  isLogin: IsLogin;
   loginUsername: LoginUsername;
   showSignup: ShowSignup;
 }

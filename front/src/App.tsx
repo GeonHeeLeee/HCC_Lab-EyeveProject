@@ -1,6 +1,6 @@
 import './App.css';
 
-import {BrowserRouter, Route, Routes} from 'react-router-dom';
+import {Route, Routes} from 'react-router-dom';
 
 import LoginPage from './pages/loginPage/LoginPage';
 
@@ -10,16 +10,14 @@ function App() {
 
   return (
       <>
-        <BrowserRouter>
-          <Routes>
-            <Route path='/' element={<LoginPage/>}/>
-            {/* <Route
+        <Routes>
+          <Route path='/' element={<LoginPage/>}/>
+          {/* <Route
         path='/mypage'
         element={<PrivateRoute component={<MyPage />}></PrivateRoute>}></Route> */}
-            <Route path='/mypage' element={<MyPage/>}/>
-          </Routes>
-          {/* <LoginPage></LoginPage>*/}
-        </BrowserRouter>
+          <Route path='/mypage' element={<MyPage/>}/>
+        </Routes>
+        {/* <LoginPage></LoginPage>*/}
       </>
   );
 }

@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
+import {IsLogin} from "../types/redux.type";
 
-const initialState = {
+const initialState: IsLogin = {
   value: false,
 };
 

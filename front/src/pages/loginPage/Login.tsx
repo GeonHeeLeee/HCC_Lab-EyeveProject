@@ -12,10 +12,11 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 import API from '../../services/api';
+import {RootState} from "../../store/types/redux.type";
 
 function Login() {
   const dispatch = useDispatch();
-  const isLogin = useSelector((state) => state.isLogin.value);
+  const isLogin = useSelector((state: RootState) => state.isLogin.value);
   const navigate = useNavigate();
 
   // useEffect
@@ -26,7 +27,7 @@ function Login() {
     userPassword: '',
   });
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = (e: SubmitEvent) => {
     e.preventDefault();
 
     if (!loginState.userId) {
@@ -128,7 +129,8 @@ function Login() {
               });
             }}
           />
-          <input type='submit' value='Login' onClick={handleLoginSubmit} />
+          {/*<input type='submit' value='Login' onClick={handleLoginSubmit} />*/}
+          <input type='submit' value='Login'  />
         </form>
         <h3
           onClick={() => {

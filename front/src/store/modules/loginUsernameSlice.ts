@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
+import {LoginUsername} from "../types/redux.type";
 
-const initialState = {
+const initialState: LoginUsername = {
   username: '',
 };
 
