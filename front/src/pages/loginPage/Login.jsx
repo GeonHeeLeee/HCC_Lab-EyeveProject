@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 import { useSelector, useDispatch } from 'react-redux';
 import { show } from '../../store/modules/showSignupSlice';
-import { login, logout } from '../../store/modules/isLoginSlice';
+import { login } from '../../store/modules/isLoginSlice';
 import { setLoginUsername } from '../../store/modules/loginUsernameSlice';
 import axios from 'axios';
 
@@ -18,9 +18,9 @@ function Login() {
   const isLogin = useSelector((state) => state.isLogin.value);
   const navigate = useNavigate();
 
-  // useEffect
-
   console.log(isLogin);
+
+  // 사용자 input 받아오는 state
   const [loginState, setLoginState] = useState({
     userId: '',
     userPassword: '',
@@ -34,22 +34,8 @@ function Login() {
     } else if (!loginState.userPassword) {
       return alert('패스워드를 입력하세요.');
     }
-    //로그인 처리
 
-    /*
-    
-    1.axios 요청을 통해 서버로 입력받은 아이디와 패스워드 전송
-
-    2.서버로부터 받은 상태코드에 따라 로그인 상태 변수 바꾸기
-
-    3. 로그인 성공 시, 
-      3-1. 로컬 스토리지에 받은 토큰 값 저장
-      3-2. 토큰 마이페이지로 이동
-
-    4. 페이지가 새로고침 시, 로컬 스토리지에 있는 토큰 값을 바탕으로 isLogin 값 갱신 (useEffect 사용)
-
-    */
-
+    // 로그인
     axios
       .post(`${API}/users/login`, loginState, {
         withCredentials: true,
@@ -62,13 +48,7 @@ function Login() {
           return alert('로그인 실패.');
         } else if (res.status === 200) {
           // 로그인 성공
-          // 헤더로부터 sessionId 가져오기
-          // let accessToken = res.headers['set-cookie'];
-
-          // 로그인 성공 시, localStorage에 userName 저장
-
-          console.log(res.data);
-          localStorage.setItem('userName', res.data);
+          localStorage.setItem('userName', res.data); // 로그인 성공 시, localStorage에 userName 저장
 
           console.log('userName: ', res.data.userName);
           console.log('userId: ', res.data.userId);
@@ -78,10 +58,7 @@ function Login() {
 
           alert(`안녕하세요 ${localStorage.getItem('userName')}님`);
 
-          // localstorage에 세선 아이디 저장
-          // localStorage.setItem('sessionId',);
-
-          navigate('/mypage');
+          navigate('/mypage'); // mypage로 navigate
 
           return res;
         }
@@ -89,10 +66,11 @@ function Login() {
       .catch((error) => {
         if (axios.isAxiosError(error)) {
           console.log('error message: ', error.message);
-          // navigate('/mypage'); 실험
+
           return alert('로그인 실패');
         } else {
           console.log('unexpected error: ', error);
+
           return alert('로그인 실패');
         }
       });
@@ -108,7 +86,6 @@ function Login() {
             name='userID'
             placeholder='ID'
             value={loginState.userId}
-            // onChange={handleId}
             onChange={(e) => {
               setLoginState({
                 ...loginState,

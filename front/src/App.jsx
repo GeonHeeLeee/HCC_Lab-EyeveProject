@@ -11,12 +11,8 @@ function App() {
   return (
     <Routes>
       <Route path='/' element={<LoginPage />}></Route>
-      {/* <Route
-        path='/mypage'
-        element={<PrivateRoute component={<MyPage />}></PrivateRoute>}></Route> */}
       <Route path='/mypage' element={<MyPage></MyPage>}></Route>
     </Routes>
-    // <LoginPage></LoginPage>
   );
 }
 
