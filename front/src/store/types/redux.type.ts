@@ -11,8 +11,10 @@ export type ShowSignup = {
   value: boolean;
 }
 
+// TODO: any 변경
 export type SocketState = {
-  socket: Socket|null
+  socket: Socket|null,
+  others: any[];
 }
 
 export type RootState = {

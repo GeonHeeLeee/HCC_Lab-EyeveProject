@@ -15,30 +15,26 @@ import API from '../../services/api';
 import {RootState} from "../../store/types/redux.type";
 
 function Login() {
-  const dispatch = useDispatch();
-  const isLogin = useSelector((state: RootState) => state.isLogin.value);
-  const navigate = useNavigate();
-
-  console.log(isLogin);
-
-  // 사용자 input 받아오는 state
-  const [loginState, setLoginState] = useState({
+  const [loginInfo, setLoginInfo] = useState({
     userId: '',
     userPassword: '',
   });
+  const isLogin = useSelector((state: RootState) => state.isLogin.value);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleLoginSubmit = (e: React.MouseEvent) => {
     e.preventDefault();
 
-    if (!loginState.userId) {
+    if (!loginInfo.userId) {
       return alert('아이디를 입력하세요.');
-    } else if (!loginState.userPassword) {
+    } else if (!loginInfo.userPassword) {
       return alert('패스워드를 입력하세요.');
     }
 
     // 로그인
     axios
-      .post(`${API}/users/login`, loginState, {
+      .post(`${API}/users/login`, loginInfo, {
         withCredentials: true,
       })
       .then((res) => {
@@ -55,7 +51,7 @@ function Login() {
           console.log('userId: ', res.data.userId);
 
           dispatch(login());
-          dispatch(setLoginUsername(loginState.userId));
+          dispatch(setLoginUsername(loginInfo.userId));
 
           alert(`안녕하세요 ${localStorage.getItem('userName')}님`);
 
@@ -86,10 +82,10 @@ function Login() {
             type='text'
             name='userID'
             placeholder='ID'
-            value={loginState.userId}
+            value={loginInfo.userId}
             onChange={(e) => {
-              setLoginState({
-                ...loginState,
+              setLoginInfo({
+                ...loginInfo,
                 userId: e.target.value,
               });
             }}
@@ -98,10 +94,10 @@ function Login() {
             type='password'
             name='userPassword'
             placeholder='Password'
-            value={loginState.userPassword}
+            value={loginInfo.userPassword}
             onChange={(e) => {
-              setLoginState({
-                ...loginState,
+              setLoginInfo({
+                ...loginInfo,
                 userPassword: e.target.value,
               });
             }}

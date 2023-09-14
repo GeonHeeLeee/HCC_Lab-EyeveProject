@@ -1,13 +1,12 @@
 import axios from 'axios';
 import React, {useEffect, useState} from 'react';
 
-import {useDispatch, useSelector} from 'react-redux';
+import {useDispatch} from 'react-redux';
 import {useNavigate} from 'react-router-dom';
 
 import API from '../../services/api';
 import {io} from "socket.io-client";
 import {clearSocket, setSocket} from "../../store/modules/socketSlice";
-import {RootState} from "../../store/types/redux.type";
 
 /*
     useEffect 이용해서 페이지 이동할 때 세션 관리 (별도 파일로 관리하면 좋을듯)
@@ -18,13 +17,12 @@ function MyPage() {
   const [render, setRender] = useState(false);
   const [meetingId, setMeetingId] = useState('');
   const dispatch = useDispatch();
-  const {socket: socketState} = useSelector((state: RootState) => state.socket)
 
   const handleTyping = (event: React.ChangeEvent<HTMLInputElement>) => {
     setMeetingId(event.target.value);
   }
 
-  const handleEnterMeeting = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleEnterMeeting = (_: React.MouseEvent<HTMLButtonElement>) => {
     const socket = io();
 
     socket.on('connect', () => {
@@ -37,6 +35,7 @@ function MyPage() {
 
     socket.on('connect_error', (error) => {
       alert('미팅 참여에 실패하였습니다.');
+      console.error(error);
       socket.close();
       dispatch(clearSocket({}));
     })
@@ -66,6 +65,7 @@ function MyPage() {
           .catch((error) => {
             localStorage.removeItem('userName');
             alert('접근 불가합니다.');
+            console.error(error);
             navigate('/');
             return;
           });
