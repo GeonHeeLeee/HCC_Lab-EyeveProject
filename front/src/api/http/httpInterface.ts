@@ -1,5 +1,5 @@
 import {ICommunication} from "./http";
-import type {SignInData, SignUpData} from "./http.type";
+import type {SignInData, SignInRes, SignUpData} from "./http.type";
 
 
 export class HttpInterface {
@@ -7,7 +7,7 @@ export class HttpInterface {
   }
 
   // TODO: Api 명세 대로 구현하기
-  async signIn(data: SignInData) {
+  async signIn(data: SignInData): Promise<string> {
     return this.apiClient.post('/users/login', data);
   }
 

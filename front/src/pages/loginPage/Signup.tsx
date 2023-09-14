@@ -58,7 +58,6 @@ function Signup() {
     const data = sendSignup(signupState);
 
     data.then((res) => {
-      console.log(res);
       if (res === false) {
         alert('회원가입 실패');
       } else {

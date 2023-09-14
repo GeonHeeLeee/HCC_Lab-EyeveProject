@@ -9,3 +9,8 @@ export type SignUpData = {
   userName: string;
   userType: "PROFESSOR" | "STUDENT";
 }
+
+export type SignInRes = {
+  userName: string;
+  userType: "PROFESSOR" | "STUDENT";
+}
