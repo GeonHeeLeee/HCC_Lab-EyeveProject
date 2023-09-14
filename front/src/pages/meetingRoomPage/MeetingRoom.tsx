@@ -1,11 +1,11 @@
-import {useSelector} from "react-redux";
-import {RootState} from "../../store/types/redux.type";
+// import {useSelector} from "react-redux";
+// import {RootState} from "../../store/types/redux.type";
 import Timeline from "../../components/meetingRoom/timeline/Timeline.component";
 import Chat from "../../components/meetingRoom/chat/Chat.componenet";
 import FileShare from "../../components/meetingRoom/fileShare/FileShare.component";
 
 const MeetingRoom = () => {
-  const {socket: mySocket} = useSelector((state: RootState) => state.socket);
+  // const {socket: mySocket} = useSelector((state: RootState) => state.socket);
 
   return (
       <main>
