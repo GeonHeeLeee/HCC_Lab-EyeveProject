@@ -3,14 +3,11 @@ package hcclab.eyeveProject.entity;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.springframework.web.socket.WebSocketSession;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Entity
 @Getter
@@ -33,4 +30,18 @@ public class Rooms {
         users.add(user);
         user.setRoom(this);
     }
+
+    @Transient
+    private Map<String, WebSocketSession> userInRoomList = new HashMap<>();
+
+    public Rooms(User user) {
+        this.roomName = UUID.randomUUID().toString();
+        addUser(user);
+        this.createdTime = LocalDateTime.now();
+    }
+
+    public void addUserAndSession(String userId, WebSocketSession session){
+        userInRoomList.put(userId, session);
+    }
+
 }
