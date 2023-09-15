@@ -27,7 +27,6 @@ public class RoomRepository {
         return findRoom;
     }
 
-
     /*
     DB 방 저장 메서드
     - 해당 방을 DB에 저장함

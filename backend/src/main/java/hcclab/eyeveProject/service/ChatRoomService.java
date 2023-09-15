@@ -30,6 +30,7 @@ public class ChatRoomService {
     /*
     방 생성 메서드
     - 방을 생성하고, 연관 관계 지정 후, DB 저장
+    - 이후 생성자에게 roomName 반환
     - 반환 값으로 roomName(roomUUID를 반환)
      */
     @Transactional
@@ -40,10 +41,21 @@ public class ChatRoomService {
         roomRepository.save(createdRoom);
 
         createdRoom.addUserAndSession(userId, session);
-
         chatRoomMap.getRoomList().put(createdRoom.getRoomName(), createdRoom);
-
+        sendRoomName(session, createdRoom.getRoomName());
         return createdRoom.getRoomName();
+    }
+
+    /*
+    해당 세션에게 roomName 전송 메서드
+    - 방 생성 후, 생성자에게 roomName 반환
+     */
+    public void sendRoomName(WebSocketSession session, String roomName){
+        try {
+            session.sendMessage(new TextMessage(roomName));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /*
