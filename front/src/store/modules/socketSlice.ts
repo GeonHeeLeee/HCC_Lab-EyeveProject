@@ -3,7 +3,7 @@ import {SocketState} from "../types/redux.type";
 
 const initialState: SocketState = {
   socket: null,
-  others: [],
+  otherSockets: [],
 }
 
 export const socketSlice = createSlice({

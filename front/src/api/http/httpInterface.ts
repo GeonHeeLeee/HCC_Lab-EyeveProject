@@ -15,5 +15,9 @@ export class HttpInterface {
     return this.apiClient.post('/users', data);
   }
 
+  // async makeMeetingRoom() {
+  //   return this.apiClient.get('/socket');
+  // }
+
 
 }

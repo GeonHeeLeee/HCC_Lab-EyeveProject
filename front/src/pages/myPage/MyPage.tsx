@@ -1,26 +1,27 @@
 import axios from 'axios';
 import React, {useEffect, useState} from 'react';
 
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {useNavigate} from 'react-router-dom';
 
 import API from '../../services/api';
 import {io} from "socket.io-client";
-import {clearSocket, setSocket} from "../../store/modules/socketSlice";
+import {clearSocket, setSocket, socketSlice} from "../../store/modules/socketSlice";
+import useInput from "../../hooks/useInput";
+import {RootState} from "../../store/types/redux.type";
 
 /*
     useEffect 이용해서 페이지 이동할 때 세션 관리 (별도 파일로 관리하면 좋을듯)
 */
 
+const initialForm = {meetingId: ''};
+
 function MyPage() {
   const navigate = useNavigate();
   const [render, setRender] = useState(false);
-  const [meetingId, setMeetingId] = useState('');
   const dispatch = useDispatch();
-
-  const handleTyping = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setMeetingId(event.target.value);
-  }
+  const [form, onChange] = useInput(initialForm);
+  const {networkInterface} = useSelector((state: RootState) => state.network);
 
   const handleEnterMeeting = (_: React.MouseEvent<HTMLButtonElement>) => {
     const socket = io();
@@ -74,12 +75,22 @@ function MyPage() {
     checkUserAuth();
   }, []);
 
+  const handleCreateMeeting = () => {
+    // networkInterface
+    const socket = io('http://localhost:8081', {
+      path: '/socket',
+      transports: ['websocket'],
+    });
+    socket.on('connect', () => {
+      console.log('socket connected');
+    });
+  };
 
   return <>
     {render && <div>안녕하세요 {localStorage.getItem('userName')}님</div>}
-    <button>미팅 생성</button>
+    <button onClick={handleCreateMeeting}>미팅 생성</button>
     <div>
-      <input type='text' placeholder='Meet ID 입력하기' value={meetingId} onChange={handleTyping}/>
+      <input type='text' placeholder='Meet ID을 입력해주세요' value={form.meetingId} name='meetingId' onChange={onChange}/>
       <button onClick={handleEnterMeeting}>참가하기</button>
     </div>
   </>;

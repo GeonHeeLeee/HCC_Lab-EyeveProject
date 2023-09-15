@@ -11,7 +11,7 @@ const MeetingRoom = () => {
       <main>
         <section>
           <section>
-            {/* TODO: 파일 보여주기 영역 */}
+            {/* TODO: 공유된 파일 보여주기 영역 */}
           </section>
           <section>
             {/* TODO: Video 영역 */}

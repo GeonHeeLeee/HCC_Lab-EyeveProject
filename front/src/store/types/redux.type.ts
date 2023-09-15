@@ -1,4 +1,5 @@
 import {Socket} from "socket.io-client";
+import {HttpInterface} from "../../api/http/httpInterface";
 
 export type IsLogin = {
   value: boolean;
@@ -13,8 +14,12 @@ export type ShowSignup = {
 
 // TODO: any 변경
 export type SocketState = {
-  socket: Socket|null,
-  others: any[];
+  socket: Socket | null,
+  otherSockets: (Socket | string)[];  // socket id or socket instance?
+}
+
+export type Network = {
+  networkInterface: HttpInterface,
 }
 
 export type RootState = {
@@ -22,4 +27,6 @@ export type RootState = {
   loginUsername: LoginUsername;
   showSignup: ShowSignup;
   socket: SocketState,
+  network: Network,
 }
+
