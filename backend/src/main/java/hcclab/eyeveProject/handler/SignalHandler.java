@@ -16,8 +16,13 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 public class SignalHandler extends TextWebSocketHandler {
 
     private final ObjectMapper objectMapper;
-
     private final ChatRoomService chatRoomService;
+
+    /*
+    메세지 처리 메서드
+    - 메세지가 오면 payload를 ChatMessage로 변환
+    - ChatRoomService.handlerActions에 위임 후, messageType에 따라 동작 수행
+     */
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();

@@ -12,7 +12,10 @@ import java.util.Map;
 @Setter
 @Slf4j
 public class ChatRoomMap {
-
+    /*
+    생성된 방들의 정보를 담는 ChatRoomMap
+    - 하나만 존재해야 하므로 singleton으로 만듦
+     */
     private static ChatRoomMap chatRoomMap = new ChatRoomMap();
     private Map<String, Rooms> RoomList = new HashMap<>();
 

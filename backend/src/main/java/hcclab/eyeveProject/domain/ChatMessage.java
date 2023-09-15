@@ -10,7 +10,7 @@ public class ChatMessage {
         CREATE, JOIN, TALK;
     }
 
-    private String roomName;
+    private String roomName; //방 이름 - UUID
     private String userId;
     private MessageType messageType;
     private String message;
