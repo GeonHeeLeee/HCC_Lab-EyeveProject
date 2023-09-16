@@ -5,6 +5,7 @@ import {Network} from "../types/redux.type";
 
 const initialState: Network = {
   networkInterface: new HttpInterface(new Http()),
+  // networkInterface: undefined,
 }
 
 const networkSlice = createSlice({

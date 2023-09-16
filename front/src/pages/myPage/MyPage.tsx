@@ -76,14 +76,28 @@ function MyPage() {
   }, []);
 
   const handleCreateMeeting = () => {
-    // networkInterface
-    const socket = io('http://localhost:8081', {
+    const endpoint = 'http://localhost:8081'
+    // const endpoint = process.env.SERVER_API !;
+    const socket = io(endpoint, {
       path: '/socket',
       transports: ['websocket'],
+      withCredentials: true,
+
     });
+    console.log(socket, socket.id)
+    socket.connect();
+
     socket.on('connect', () => {
-      console.log('socket connected');
-    });
+      console.log('connection is successful', 'socket id: ', socket.id)
+    })
+
+    socket.on('connect_error', (error) => {
+      console.log('connection is failed', error);
+    })
+
+    socket.on('disconnect', (message) => {
+
+    })
   };
 
   return <>
