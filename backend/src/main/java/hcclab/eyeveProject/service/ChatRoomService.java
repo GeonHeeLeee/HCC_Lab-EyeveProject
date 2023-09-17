@@ -6,6 +6,7 @@ import hcclab.eyeveProject.entity.Rooms;
 import hcclab.eyeveProject.entity.User;
 import hcclab.eyeveProject.repository.RoomRepository;
 import hcclab.eyeveProject.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,8 +15,12 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
 
 @Service
+@Slf4j
 public class ChatRoomService {
 
     @Autowired
@@ -36,13 +41,16 @@ public class ChatRoomService {
     @Transactional
     public String createRoom(String userId, WebSocketSession session) {
         User findUser = userRepository.findById(userId);
-
         Rooms createdRoom = new Rooms(findUser);
         roomRepository.save(createdRoom);
 
         createdRoom.addUserAndSession(userId, session);
         chatRoomMap.getRoomList().put(createdRoom.getRoomName(), createdRoom);
         sendRoomName(session, createdRoom.getRoomName());
+
+        log.info("방 생성 요청 - userId : " + findUser.getUserId());
+        log.info("방 생성 요청 - roomName : " + createdRoom.getRoomName());
+
         return createdRoom.getRoomName();
     }
 
@@ -69,6 +77,11 @@ public class ChatRoomService {
         Rooms roomJoined = RoomList.get(roomName);
         roomJoined.addUser(findUser);
         roomJoined.addUserAndSession(userId, session);
+
+        log.info("방 참가 요청 - userId : " + findUser.getUserId());
+        log.info("방 참가 요청 - roomName : " + roomJoined.getRoomName());
+        log.info("밤 참가 요청 - 방의 인원 수 : " + roomJoined.getUserInRoomList().size());
+
         return roomJoined;
     }
 
@@ -82,6 +95,8 @@ public class ChatRoomService {
                 .forEach(s -> {
                     try {
                         s.sendMessage(new TextMessage(message));
+                        log.info("방 메세지 전달 - 인원 수 : " + room.getUserInRoomList().size());
+                        log.info("방 메세지 전달 - 내용 : " + message + ", 보낸 이 : " + session.getId());
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -96,8 +111,8 @@ public class ChatRoomService {
     public void handlerActions(WebSocketSession session, ChatMessage chatMessage){
         String roomName = chatMessage.getRoomName();
         String senderId = chatMessage.getUserId();
-
         Rooms room;
+
         switch(chatMessage.getMessageType()){
             case CREATE:
                 createRoom(senderId, session);
@@ -113,6 +128,31 @@ public class ChatRoomService {
                 break;
         }
     }
+
+    /*
+    방에서 유저를 지우는 메서드
+    - userInRoomList에서 해당 session을 찾아 Map<userId, WebSocketSession>을 삭제
+    - user entity의 roomId를 null로 지정
+     */
+    @Transactional
+    public void removeUserFromRoom(WebSocketSession session) {
+        RoomList.values().stream()
+                .filter(room -> room.getUserInRoomList().values().contains(session))
+                .forEach(room -> room.getUserInRoomList().entrySet().removeIf(entry -> {
+                    if (entry.getValue().equals(session)) {
+                        User user = userRepository.findById(entry.getKey());
+                        log.info("방 나가기 - userId : " + user.getUserId());
+                        log.info("방 나가기 - roomName : " + room.getRoomName());
+                        room.removeUser(user);
+                        return true;
+                    }
+                    return false;
+                }));
+    }
+
+
+
+
 
 }
 
