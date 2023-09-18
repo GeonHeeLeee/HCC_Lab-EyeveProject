@@ -25,6 +25,7 @@ public class Rooms {
 
      /*
      연관관계 편의 메서드
+     - 유저 추가
       */
     public void addUser(User user) {
         users.add(user);
@@ -32,7 +33,17 @@ public class Rooms {
     }
 
     /*
+    연관관계 편의 메서드
+    - 유저 삭제
+     */
+    public void removeUser(User user) {
+        users.remove(user);
+        user.setRoom(null);
+    }
+
+    /*
     해당 방에 있는 유저의 List
+    - <userId, WebSocketSession> 저장
     - DB에 등록하지 않으므로 @Transient
      */
     @Transient
