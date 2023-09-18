@@ -76,47 +76,33 @@ function MyPage() {
   }, []);
 
   const handleCreateMeeting = () => {
-    // const endpoint = 'http://localhost:3000'
+    // const endpoint = 'http://localhost:8081'
     const endpoint = process.env.REACT_APP_SERVER_API !;
     const socket = new WebSocket('ws://localhost:8081/socket');
     socket.onopen = function () {
-      console.log('socket is send')
       socket.send(JSON.stringify({
         userId: '이종민',
         messageType: 'CREATE',
-      }))
+      }));
+      console.log('socket is send');
     }
+
     socket.onmessage = function (event) {
       console.log(event)
     }
+
+    let i = 0;
     socket.onerror = (error) => {
-      console.log(error)
+      console.log(error);
+      if (i == 2) {
+        socket.close();
+      }
+      i++;
     }
-    // const socket = io(endpoint, {
-    //   path: '/socket',
-    //   // transports: ['websocket'],
-    //   withCredentials: true,
-    // });
-    //
-    // socket.connect();
-    //
-    // socket.on('connect', () => {
-    //   console.log('connection is successful', 'socket id: ', socket.id)
-    // })
-    //
-    // let i = 0;
-    // socket.on('connect_error', (error) => {
-    //   console.log('connection is failed',);
-    //   console.dir(error)
-    //   if (i === 3) {
-    //     socket.close();
-    //   }
-    //   i++;
-    // })
-    //
-    // socket.on('disconnect', (message) => {
-    //
-    // })
+
+    socket.onclose = function () {
+
+    }
   };
 
   return <>

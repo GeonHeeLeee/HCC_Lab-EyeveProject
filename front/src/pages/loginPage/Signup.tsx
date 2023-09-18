@@ -5,6 +5,7 @@ import {hide} from '../../store/modules/showSignupSlice';
 import API from '../../services/api';
 
 import styles from '../../styles/login.module.css';
+import Button from "../../components/common/Button";
 
 // TODO: any 타입을 바꾸기
 // 회원가입 정보 서버로 전송
@@ -70,13 +71,13 @@ function Signup() {
   return (
       <div className={styles.signUpBox}>
         <div className={styles.signUpWrapper}>
-          <button
+          <Button
               className={styles.closeButton}
               onClick={() => {
                 dispatch(hide());
               }}>
             ✖
-          </button>
+          </Button>
           <h2>회원가입</h2>
           <form className={styles.signupForm} action='' method='post'>
             <input

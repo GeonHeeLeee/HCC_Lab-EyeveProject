@@ -43,6 +43,8 @@ public class ChatRoomService {
         createdRoom.addUserAndSession(userId, session);
         chatRoomMap.getRoomList().put(createdRoom.getRoomName(), createdRoom);
         sendRoomName(session, createdRoom.getRoomName());
+
+        System.out.println("created:" + createdRoom.getRoomName());
         return createdRoom.getRoomName();
     }
 

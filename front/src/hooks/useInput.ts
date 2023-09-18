@@ -3,11 +3,12 @@ import {ChangeEvent, useCallback, useState} from "react";
 const useInput = <T>(initialForm: T) => {
   const [form, setForm] = useState(initialForm);
   const onChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const {name, value} = e.target;
     setForm({
       ...form,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
-  }, []);
+  }, [form]);
 
   const reset = useCallback(() => {
     setForm(initialForm)
