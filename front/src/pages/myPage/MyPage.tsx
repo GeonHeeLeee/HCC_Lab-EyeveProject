@@ -81,14 +81,14 @@ function MyPage() {
     const socket = new WebSocket('ws://localhost:8081/socket');
     socket.onopen = function () {
       socket.send(JSON.stringify({
-        userId: '이종민',
+        userId: 'aaa',  // TODO: 바꿔야 함
         messageType: 'CREATE',
       }));
       console.log('socket is send');
     }
 
     socket.onmessage = function (event) {
-      console.log(event)
+      console.log(event.data, event);
     }
 
     let i = 0;
