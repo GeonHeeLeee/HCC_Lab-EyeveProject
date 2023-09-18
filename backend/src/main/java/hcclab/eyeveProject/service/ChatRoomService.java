@@ -139,6 +139,7 @@ public class ChatRoomService {
         RoomList.values().stream()
                 .filter(room -> room.getUserInRoomList().values().contains(session))
                 .forEach(room -> room.getUserInRoomList().entrySet().removeIf(entry -> {
+                    log.info("방 나가기 - 방에 남아 있는 인원 : " + entry.getKey());
                     if (entry.getValue().equals(session)) {
                         User user = userRepository.findById(entry.getKey());
                         log.info("방 나가기 - userId : " + user.getUserId());

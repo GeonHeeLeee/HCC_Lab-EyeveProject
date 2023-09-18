@@ -48,9 +48,12 @@ public class LoginService {
     - 해당 userId의 유저가 존재하고, 입력한 비밀번호가 일치하면 true 반환
     - 해당 유저가 존재하지 않거나, 비밀번호가 틀릴 시 false 반환
      */
-    public boolean loginCheck(User user) {
+    public User loginCheck(User user) {
         Optional<User> findUser = Optional.ofNullable(findUserById(user.getUserId()));
-        return findUser.isPresent() && findUser.get().getUserPassword().equals(user.getUserPassword());
+        if(findUser.isPresent() && findUser.get().getUserPassword().equals(user.getUserPassword())){
+            return findUser.get();
+        }
+        return null;
     }
 
     /*
