@@ -1,14 +1,11 @@
 import React, {useState} from 'react';
-
 import {useDispatch} from 'react-redux';
-
 import axios from 'axios';
-
 import {hide} from '../../store/modules/showSignupSlice';
+import API from '../../services/api';
 
 import styles from '../../styles/login.module.css';
-
-import API from '../../services/api';
+import Button from "../../components/common/Button";
 
 // TODO: any 타입을 바꾸기
 // 회원가입 정보 서버로 전송
@@ -32,38 +29,39 @@ async function sendSignup(userSignupData: any) {
   }
 }
 
+const initialState = {
+  userName: '',
+  userId: '',
+  userPassword: '',
+  userType: '',
+};
+
 function Signup() {
   const dispatch = useDispatch();
 
-  const [signupState, setSignupState] = useState({
-    userName: '',
-    userId: '',
-    userPassword: '',
-    userType: '',
-  });
+  const [signupInfo, setSignupInfo] = useState(initialState);
 
   const handleSignupSubmit = (event: React.MouseEvent) => {
     event.preventDefault();
 
-    if (!signupState.userName) {
+    if (!signupInfo.userName) {
       return alert('이름을 입력하세요.');
-    } else if (!signupState.userId) {
+    } else if (!signupInfo.userId) {
       return alert('아이디를 입력하세요.');
-    } else if (!signupState.userPassword) {
+    } else if (!signupInfo.userPassword) {
       return alert('패스워드를 입력하세요.');
-    } else if (!signupState.userType) {
+    } else if (!signupInfo.userType) {
       return alert('권한을 체크하세요.');
     }
 
-    const data = sendSignup(signupState);
+    const data = sendSignup(signupInfo);
 
     data.then((res) => {
-      console.log(res);
       if (res === false) {
         alert('회원가입 실패');
       } else {
         alert(
-            `반갑습니다. ${signupState.userName} 님\n회원가입이 완료되었습니다. `
+            `반갑습니다. ${signupInfo.userName} 님\n회원가입이 완료되었습니다. `
         );
         dispatch(hide());
       }
@@ -73,23 +71,23 @@ function Signup() {
   return (
       <div className={styles.signUpBox}>
         <div className={styles.signUpWrapper}>
-          <button
+          <Button
               className={styles.closeButton}
               onClick={() => {
                 dispatch(hide());
               }}>
             ✖
-          </button>
+          </Button>
           <h2>회원가입</h2>
           <form className={styles.signupForm} action='' method='post'>
             <input
                 type='text'
                 name='userName'
                 placeholder='Name'
-                value={signupState.userName}
+                value={signupInfo.userName}
                 onChange={(e) => {
-                  setSignupState({
-                    ...signupState,
+                  setSignupInfo({
+                    ...signupInfo,
                     userName: e.target.value,
                   });
                 }}
@@ -98,10 +96,10 @@ function Signup() {
                 type='text'
                 name='userID'
                 placeholder='ID'
-                value={signupState.userId}
+                value={signupInfo.userId}
                 onChange={(e) => {
-                  setSignupState({
-                    ...signupState,
+                  setSignupInfo({
+                    ...signupInfo,
                     userId: e.target.value,
                   });
                 }}
@@ -110,10 +108,10 @@ function Signup() {
                 type='password'
                 name='userPassword'
                 placeholder='Password'
-                value={signupState.userPassword}
+                value={signupInfo.userPassword}
                 onChange={(e) => {
-                  setSignupState({
-                    ...signupState,
+                  setSignupInfo({
+                    ...signupInfo,
                     userPassword: e.target.value,
                   });
                 }}
@@ -124,8 +122,8 @@ function Signup() {
                   name='termsAndConditions'
                   value='PROFESSOR'
                   onChange={(e) => {
-                    setSignupState({
-                      ...signupState,
+                    setSignupInfo({
+                      ...signupInfo,
                       userType: e.target.value,
                     });
                   }}
@@ -138,8 +136,8 @@ function Signup() {
                   name='termsAndConditions'
                   value='STUDENT'
                   onChange={(e) => {
-                    setSignupState({
-                      ...signupState,
+                    setSignupInfo({
+                      ...signupInfo,
                       userType: e.target.value,
                     });
                   }}
@@ -147,7 +145,7 @@ function Signup() {
               학생
             </label>
             {/*<button type='submit' value='SignUp' onClick={handleSignupSubmit}>회원가입</button>*/}
-            <input type='submit' value='SignUp' onClick={handleSignupSubmit} />
+            <input type='submit' value='SignUp' onClick={handleSignupSubmit}/>
 
           </form>
         </div>
