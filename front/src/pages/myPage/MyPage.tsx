@@ -9,9 +9,12 @@ import {io} from "socket.io-client";
 import {clearSocket, setSocket, socketSlice} from "../../store/modules/socketSlice";
 import useInput from "../../hooks/useInput";
 import {RootState} from "../../store/types/redux.type";
+import VideoScreenComponent from "../../components/meetingRoom/video/VideoScreen.component";
 
 /*
     useEffect 이용해서 페이지 이동할 때 세션 관리 (별도 파일로 관리하면 좋을듯)
+    https://developer.mozilla.org/ko/docs/Web/API/WebSockets_API/Writing_WebSocket_client_applications
+    https://doublem.org/webrtc-story-02/
 */
 
 const initialForm = {meetingId: ''};
@@ -87,9 +90,10 @@ function MyPage() {
       console.log('socket is send');
     }
 
-    socket.onmessage = function (event) {
-      console.log(event.data, event);
-    }
+    socket.addEventListener('message', (event) => {
+      // const data = JSON.parse(event.data);
+      console.log(event, event);
+    })
 
     let i = 0;
     socket.onerror = (error) => {
@@ -103,6 +107,8 @@ function MyPage() {
     socket.onclose = function () {
 
     }
+
+    dispatch(setSocket({socket}));
   };
 
   return <>
@@ -112,6 +118,8 @@ function MyPage() {
       <input type='text' placeholder='Meet ID을 입력해주세요' value={form.meetingId} name='meetingId' onChange={onChange}/>
       <button onClick={handleEnterMeeting}>참가하기</button>
     </div>
+    {/*  Test 용*/}
+    <VideoScreenComponent/>
   </>;
 }
 
