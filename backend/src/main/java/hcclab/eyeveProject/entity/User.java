@@ -1,6 +1,7 @@
 package hcclab.eyeveProject.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import hcclab.eyeveProject.entity.enumType.UserType;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

@@ -1,5 +1,6 @@
 package hcclab.eyeveProject.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import hcclab.eyeveProject.domain.ChatMessage;
 import hcclab.eyeveProject.domain.ChatRoomMap;
 import hcclab.eyeveProject.entity.Rooms;
@@ -14,6 +15,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -31,11 +33,11 @@ public class ChatRoomService {
     private ChatRoomMap chatRoomMap = ChatRoomMap.getInstance();
 
     private Map<String, Rooms> RoomList = chatRoomMap.getRoomList();
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     /*
     방 생성 메서드
     - 방을 생성하고, 연관 관계 지정 후, DB 저장
-    - 이후 생성자에게 roomName 반환
     - 반환 값으로 roomName(roomUUID를 반환)
      */
     @Transactional
@@ -46,7 +48,6 @@ public class ChatRoomService {
 
         createdRoom.addUserAndSession(userId, session);
         chatRoomMap.getRoomList().put(createdRoom.getRoomName(), createdRoom);
-        sendRoomName(session, createdRoom.getRoomName());
 
         log.info("방 생성 요청 - userId : " + findUser.getUserId());
         log.info("방 생성 요청 - roomName : " + createdRoom.getRoomName());
@@ -55,16 +56,23 @@ public class ChatRoomService {
     }
 
     /*
-    해당 세션에게 roomName 전송 메서드
-    - 방 생성 후, 생성자에게 roomName 반환
+    요청 세션에게 messageType 재전송
+    - front 처리를 위해 요청 세션에게 messageType을 재전송
+    - 방 생성(CREATE)시, roomName도 함께 넣어서 전송
      */
-    public void sendRoomName(WebSocketSession session, String roomName){
+    public void sendMessageType(WebSocketSession session,String messageType, String roomName){
+        Map<String, String> message = new HashMap<>();
+        message.put("messageType", messageType);
         try {
-            session.sendMessage(new TextMessage(roomName));
+            if(messageType == "CREATE") {message.put("roomName", roomName);}
+            String jsonMessage = objectMapper.writeValueAsString(message);
+            session.sendMessage(new TextMessage(jsonMessage));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
     }
+
 
     /*
     방 참가 메서드
@@ -108,21 +116,24 @@ public class ChatRoomService {
     - messageType에 따라 각 다른 동작 수행
      */
     @Transactional
-    public void handlerActions(WebSocketSession session, ChatMessage chatMessage){
+    public void handlerActions(WebSocketSession session, ChatMessage chatMessage) throws IOException {
         String roomName = chatMessage.getRoomName();
         String senderId = chatMessage.getUserId();
         Rooms room;
 
         switch(chatMessage.getMessageType()){
             case CREATE:
-                createRoom(senderId, session);
+                String createdRoomName = createRoom(senderId, session);
+                sendMessageType(session, "CREATE", createdRoomName);
                 break;
             case JOIN:
+                sendMessageType(session, "JOIN", null);
                 chatMessage.setMessage(senderId + "님이 입장하셨습니다.");
                 Rooms joinedRoom = joinUser(senderId, session, roomName);
                 sendMessage(chatMessage.getMessage(), session, joinedRoom);
                 break;
             case TALK :
+                sendMessageType(session, "TALK", null);
                 Rooms talkRoom = RoomList.get(roomName);
                 sendMessage(chatMessage.getMessage(),session, talkRoom);
                 break;
@@ -139,10 +150,13 @@ public class ChatRoomService {
         RoomList.values().stream()
                 .filter(room -> room.getUserInRoomList().values().contains(session))
                 .forEach(room -> room.getUserInRoomList().entrySet().removeIf(entry -> {
+                    log.info("방 나가기 - 방에 남아 있는 인원 : " + entry.getKey());
                     if (entry.getValue().equals(session)) {
                         User user = userRepository.findById(entry.getKey());
+
                         log.info("방 나가기 - userId : " + user.getUserId());
                         log.info("방 나가기 - roomName : " + room.getRoomName());
+
                         room.removeUser(user);
                         return true;
                     }
