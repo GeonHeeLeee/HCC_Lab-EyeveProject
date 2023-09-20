@@ -43,6 +43,9 @@ public class ChatRoomService {
     @Transactional
     public String createRoom(String userId, WebSocketSession session) {
         User findUser = userRepository.findById(userId);
+        /*
+        추후 findUser의 UserType이 PROFESSOR가 아니면 Room 생성 못하는 로직 추가
+         */
         Rooms createdRoom = new Rooms(findUser);
         roomRepository.save(createdRoom);
 

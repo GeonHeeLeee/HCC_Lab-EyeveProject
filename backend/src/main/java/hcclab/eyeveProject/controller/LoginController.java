@@ -10,7 +10,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 @Controller
 @Slf4j
@@ -68,4 +71,23 @@ public class LoginController {
     public void autoLogin() {
     }
 
+    /*
+    로그아웃 메서드
+    - request에서 session 삭제
+    - 이후 Cookie 생성 후, maxAge 0초로해서 response에 담아서 보냄
+     */
+    @PostMapping("/users/logout")
+    public ResponseEntity logoutUser(HttpServletRequest request,
+                                       HttpServletResponse response) {
+        HttpSession session = request.getSession(false);
+        if(session != null) {
+            session.invalidate();
+        }
+        Cookie cookie = new Cookie("JSESSIONID", null);
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+        log.info("response - Cookie : " + cookie.getValue());
+
+        return new ResponseEntity(HttpStatus.OK);
+    }
 }
