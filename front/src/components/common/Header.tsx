@@ -4,7 +4,7 @@ import Button from "./Button";
 
 const Header = () => {
   const {networkInterface} = useSelector((state: RootState) => state.network);
-  const {username} = useSelector((state: RootState) => state.loginUsername)
+  const {username} = useSelector((state: RootState) => state.loginUserInfo)
 
   const signOutHandler = () => {
 

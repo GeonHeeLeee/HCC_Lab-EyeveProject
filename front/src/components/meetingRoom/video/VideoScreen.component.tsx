@@ -40,21 +40,22 @@ const VideoScreenComponent = () => {
 
     const peerConnection = new RTCPeerConnection(configuration);
     mySocket?.addEventListener('message', async (message) => {
+      const data = JSON.parse(message.data);
       console.log(message);
       // if (message.answer) {
       //   const remoteDesc = new RTCSessionDescription(message.answer);
       //   await peerConnection.setRemoteDescription(remoteDesc);
       // }
       // if (message.offer) {
-      //   peerConnection.setRemoteDescription(new RTCPeerConnection(message.offer));
+      //   await peerConnection.setRemoteDescription(new RTCPeerConnection(message.offer));
       //   const answer = await peerConnection.createAnswer();
       //   await peerConnection.setLocalDescription(answer);
-      //   mySocket.send(JSON.stringify({answer}));
+      //   mySocket.send(JSON.stringify({answer, messageType: 'answer'}));
       // }
     })
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
-    mySocket?.send(JSON.stringify({offer}));
+    mySocket?.send(JSON.stringify({offer, messageType: 'offer'}));
   }
 
   useEffect(() => {

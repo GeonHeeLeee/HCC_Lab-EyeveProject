@@ -4,12 +4,10 @@ import styles from '../../styles/login.module.css';
 import {useSelector, useDispatch} from 'react-redux';
 import {show} from '../../store/modules/showSignupSlice';
 import {login} from '../../store/modules/isLoginSlice';
-import {setLoginUsername} from '../../store/modules/loginUsernameSlice';
-
 import {useNavigate} from 'react-router-dom';
-
 import {RootState} from "../../store/types/redux.type";
 import useInput from "../../hooks/useInput";
+import {setUserInfo} from "../../store/modules/loginUserInfo";
 
 const initialState = {
   userId: '',
@@ -20,7 +18,7 @@ function Login() {
 
   const [loginInfo, setLoginInfo] = useInput(initialState);
 
-  const isLogin = useSelector((state: RootState) => state.isLogin.value);
+  // const isLogin = useSelector((state: RootState) => state.isLogin.value);
   const {networkInterface} = useSelector((state: RootState) => state.network);
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -38,10 +36,10 @@ function Login() {
     networkInterface.signIn(loginInfo)
         .then(res => {
           if (res.status !== 200) return;
-
-          localStorage.setItem('userName', res.data);
+          const {userId, userName, userType, room} = res.data
+          localStorage.setItem('userName', userName);
           dispatch(login())
-          dispatch(setLoginUsername(loginInfo.userId));
+          dispatch(setUserInfo({userName, userType, userId}));
           alert(`안녕하세요 ${localStorage.getItem('userName')}님`);
           navigate('/mypage'); // mypage로 navigate
         })
