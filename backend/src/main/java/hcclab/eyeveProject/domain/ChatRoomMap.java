@@ -34,4 +34,16 @@ public class ChatRoomMap {
         RoomList.remove(roomName);
     }
 
+    /*
+    해당 Room이 존재하는지 확인하는 메서드
+    - 해당 Room이 존재하면 Room 반환
+    - 존재하지 않으면 null 반환
+     */
+    public Rooms getRoomFromRoomList(String roomName) {
+        if(RoomList.containsKey(roomName)){
+            return RoomList.get(roomName);
+        }
+        return null;
+    }
+
 }

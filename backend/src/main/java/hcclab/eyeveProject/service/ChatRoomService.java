@@ -83,19 +83,24 @@ public class ChatRoomService {
     - 반환값으로 참가한 Rooms를 반환
      */
     @Transactional
-    public Rooms joinUser(String userId, WebSocketSession session, String roomName) {
+    public Rooms joinUser(String userId, WebSocketSession session, String roomName) throws IOException {
         User findUser = userRepository.findById(userId);
-        Rooms roomJoined = RoomList.get(roomName);
-        roomJoined.addUser(findUser);
-        roomJoined.addUserAndSession(userId, session);
+        Rooms roomJoined = chatRoomMap.getRoomFromRoomList(roomName);
+        if(roomJoined != null) {
+            roomJoined.addUser(findUser);
+            roomJoined.addUserAndSession(userId, session);
 
-        log.info("방 참가 요청 - userId : " + findUser.getUserId());
-        log.info("방 참가 요청 - roomName : " + roomJoined.getRoomName());
-        log.info("밤 참가 요청 - 방의 인원 수 : " + roomJoined.getUserCount());
-        roomJoined.getUserInRoomList().
-                forEach((key, value) -> log.info("방 참가 요청 - 방에 있는 유저 : userId : {}",key));
+            log.info("방 참가 요청 - userId : " + findUser.getUserId());
+            log.info("방 참가 요청 - roomName : " + roomJoined.getRoomName());
+            log.info("밤 참가 요청 - 방의 인원 수 : " + roomJoined.getUserCount());
 
-        return roomJoined;
+            roomJoined.getUserInRoomList().
+                    forEach((key, value) -> log.info("방 참가 요청 - 방에 있는 유저 : userId : {}", key));
+
+            return roomJoined;
+        }
+        session.sendMessage(new TextMessage("No Such Room"));
+        return null;
     }
 
     /*
@@ -134,8 +139,11 @@ public class ChatRoomService {
             case JOIN:
                 sendMessageType(session, "JOIN", null);
                 chatMessage.setMessage(senderId + "님이 입장하셨습니다.");
+
                 Rooms joinedRoom = joinUser(senderId, session, roomName);
-                sendMessage(chatMessage.getMessage(), session, joinedRoom);
+                if(joinedRoom != null){
+                    sendMessage(chatMessage.getMessage(), session, joinedRoom); }
+
                 break;
             case TALK :
                 sendMessageType(session, "TALK", null);
@@ -169,10 +177,6 @@ public class ChatRoomService {
                     return false;
                 }));
     }
-
-
-
-
 
 }
 
