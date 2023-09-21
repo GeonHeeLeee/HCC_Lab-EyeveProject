@@ -17,6 +17,7 @@ public class ChatRoomMap {
     - 하나만 존재해야 하므로 singleton으로 만듦
      */
     private static ChatRoomMap chatRoomMap = new ChatRoomMap();
+    //생성된 방의 List - Map<roomName, Rooms>
     private Map<String, Rooms> RoomList = new HashMap<>();
 
     private ChatRoomMap(){};
@@ -26,6 +27,11 @@ public class ChatRoomMap {
     }
     public Map<String, Rooms> getRoomList() {
         return RoomList;
+    }
+
+    //RoomList에 저장된 room 삭제 메서드
+    public void deleteRoom(String roomName) {
+        RoomList.remove(roomName);
     }
 
 }

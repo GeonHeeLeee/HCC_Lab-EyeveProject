@@ -21,6 +21,7 @@ public class Rooms {
     @OneToMany(mappedBy = "room")
     private List<User> users = new ArrayList<>();
 
+    private int userCount = 0;
     private LocalDateTime createdTime;
 
      /*
@@ -39,6 +40,7 @@ public class Rooms {
     public void removeUser(User user) {
         users.remove(user);
         user.setRoom(null);
+        minusUserCount();
     }
 
     /*
@@ -65,6 +67,22 @@ public class Rooms {
      */
     public void addUserAndSession(String userId, WebSocketSession session){
         userInRoomList.put(userId, session);
+        userCount += 1;
     }
+
+    /*
+    유저가 나갔을 때 방 인원 수 - 1
+     */
+    public void minusUserCount() {
+        userCount -= 1;
+    }
+
+    /*
+    유저가 추가 되었을 때, 방 인원 수 + 1
+     */
+    public void plusUserCount() {
+        userCount += 1;
+    }
+
 
 }

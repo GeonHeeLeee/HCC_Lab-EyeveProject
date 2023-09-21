@@ -38,22 +38,22 @@ public class ChatRoomService {
     /*
     방 생성 메서드
     - 방을 생성하고, 연관 관계 지정 후, DB 저장
+    - 방 생성자는 방에 자동으로 참가
     - 반환 값으로 roomName(roomUUID를 반환)
      */
     @Transactional
     public String createRoom(String userId, WebSocketSession session) {
         User findUser = userRepository.findById(userId);
-        /*
-        추후 findUser의 UserType이 PROFESSOR가 아니면 Room 생성 못하는 로직 추가
-         */
         Rooms createdRoom = new Rooms(findUser);
         roomRepository.save(createdRoom);
 
         createdRoom.addUserAndSession(userId, session);
         chatRoomMap.getRoomList().put(createdRoom.getRoomName(), createdRoom);
 
-        log.info("방 생성 요청 - userId : " + findUser.getUserId());
-        log.info("방 생성 요청 - roomName : " + createdRoom.getRoomName());
+        log.info("방 생성 요청 - userId : {}, roomName : {}", findUser.getUserId(), createdRoom.getRoomName());
+        RoomList.forEach((roomName, room) -> log.info("방 생성 요청 - 현재 존재하는 방 : {}", roomName));
+        log.info("방 생성 요청 - 현재 방의 수 : " + RoomList.size());
+
 
         return createdRoom.getRoomName();
     }
@@ -91,7 +91,9 @@ public class ChatRoomService {
 
         log.info("방 참가 요청 - userId : " + findUser.getUserId());
         log.info("방 참가 요청 - roomName : " + roomJoined.getRoomName());
-        log.info("밤 참가 요청 - 방의 인원 수 : " + roomJoined.getUserInRoomList().size());
+        log.info("밤 참가 요청 - 방의 인원 수 : " + roomJoined.getUserCount());
+        roomJoined.getUserInRoomList().
+                forEach((key, value) -> log.info("방 참가 요청 - 방에 있는 유저 : userId : {}",key));
 
         return roomJoined;
     }
@@ -140,6 +142,7 @@ public class ChatRoomService {
                 Rooms talkRoom = RoomList.get(roomName);
                 sendMessage(chatMessage.getMessage(),session, talkRoom);
                 break;
+            //answer, offer
         }
     }
 
@@ -153,10 +156,10 @@ public class ChatRoomService {
         RoomList.values().stream()
                 .filter(room -> room.getUserInRoomList().values().contains(session))
                 .forEach(room -> room.getUserInRoomList().entrySet().removeIf(entry -> {
-                    log.info("방 나가기 - 방에 남아 있는 인원 : " + entry.getKey());
                     if (entry.getValue().equals(session)) {
                         User user = userRepository.findById(entry.getKey());
 
+                        log.info("방 나가기 - 방에 남아 있는 인원 : " + entry.getKey());
                         log.info("방 나가기 - userId : " + user.getUserId());
                         log.info("방 나가기 - roomName : " + room.getRoomName());
 

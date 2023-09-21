@@ -7,7 +7,7 @@ import lombok.Setter;
 @Setter
 public class ChatMessage {
     public enum MessageType {
-        CREATE, JOIN, TALK;
+        CREATE, JOIN, TALK, ANSWER, OFFER;
     }
     private String roomName; //방 이름 - UUID
     private String userId;
