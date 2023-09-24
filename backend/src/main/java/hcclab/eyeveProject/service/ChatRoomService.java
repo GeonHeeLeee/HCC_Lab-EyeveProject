@@ -48,12 +48,12 @@ public class ChatRoomService {
         roomRepository.save(createdRoom);
 
         createdRoom.addUserAndSession(userId, session);
+
         chatRoomMap.getRoomList().put(createdRoom.getRoomName(), createdRoom);
 
         log.info("방 생성 요청 - userId : {}, roomName : {}", findUser.getUserId(), createdRoom.getRoomName());
         RoomList.forEach((roomName, room) -> log.info("방 생성 요청 - 현재 존재하는 방 : {}", roomName));
         log.info("방 생성 요청 - 현재 방의 수 : " + RoomList.size());
-
 
         return createdRoom.getRoomName();
     }
@@ -73,7 +73,6 @@ public class ChatRoomService {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
     }
 
 
@@ -81,18 +80,19 @@ public class ChatRoomService {
     방 참가 메서드
     - 해당 유저와 해당 유저의 세션을 지정한 방에 참가시킴
     - 반환값으로 참가한 Rooms를 반환
+    - Map과 DB에 있는 Rooms가 연동되지 않을 수 있으므로 주의 : 나중에 기능 추가 시 수정 요함
      */
     @Transactional
     public Rooms joinUser(String userId, WebSocketSession session, String roomName) throws IOException {
         User findUser = userRepository.findById(userId);
+        //Rooms roomJoined = roomRepository.findRoomByName(roomName);
         Rooms roomJoined = chatRoomMap.getRoomFromRoomList(roomName);
         if(roomJoined != null) {
-            roomJoined.addUser(findUser);
+            findUser.setRoom(roomJoined);
             roomJoined.addUserAndSession(userId, session);
 
             log.info("방 참가 요청 - userId : " + findUser.getUserId());
             log.info("방 참가 요청 - roomName : " + roomJoined.getRoomName());
-            log.info("밤 참가 요청 - 방의 인원 수 : " + roomJoined.getUserCount());
 
             roomJoined.getUserInRoomList().
                     forEach((key, value) -> log.info("방 참가 요청 - 방에 있는 유저 : userId : {}", key));
@@ -129,7 +129,6 @@ public class ChatRoomService {
     public void handlerActions(WebSocketSession session, ChatMessage chatMessage) throws IOException {
         String roomName = chatMessage.getRoomName();
         String senderId = chatMessage.getUserId();
-        Rooms room;
 
         switch(chatMessage.getMessageType()){
             case CREATE:
@@ -171,7 +170,7 @@ public class ChatRoomService {
                         log.info("방 나가기 - userId : " + user.getUserId());
                         log.info("방 나가기 - roomName : " + room.getRoomName());
 
-                        room.removeUser(user);
+                        user.setRoom(null);
                         return true;
                     }
                     return false;
