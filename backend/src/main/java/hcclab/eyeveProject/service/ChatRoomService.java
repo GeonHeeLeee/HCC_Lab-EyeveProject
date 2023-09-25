@@ -1,5 +1,6 @@
 package hcclab.eyeveProject.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hcclab.eyeveProject.domain.ChatMessage;
 import hcclab.eyeveProject.domain.ChatRoomMap;
@@ -8,6 +9,9 @@ import hcclab.eyeveProject.entity.User;
 import hcclab.eyeveProject.repository.RoomRepository;
 import hcclab.eyeveProject.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.kurento.client.KurentoClient;
+import org.kurento.client.MediaPipeline;
+import org.kurento.client.WebRtcEndpoint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +34,7 @@ public class ChatRoomService {
     @Autowired
     private UserRepository userRepository;
 
+    private WebRTCSignalingService webRTCSignalingService;
     private ChatRoomMap chatRoomMap = ChatRoomMap.getInstance();
 
     private Map<String, Rooms> RoomList = chatRoomMap.getRoomList();
@@ -46,9 +51,7 @@ public class ChatRoomService {
         User findUser = userRepository.findById(userId);
         Rooms createdRoom = new Rooms(findUser);
         roomRepository.save(createdRoom);
-
         createdRoom.addUserAndSession(userId, session);
-
         chatRoomMap.getRoomList().put(createdRoom.getRoomName(), createdRoom);
 
         log.info("방 생성 요청 - userId : {}, roomName : {}", findUser.getUserId(), createdRoom.getRoomName());
@@ -129,7 +132,7 @@ public class ChatRoomService {
     public void handlerActions(WebSocketSession session, ChatMessage chatMessage) throws IOException {
         String roomName = chatMessage.getRoomName();
         String senderId = chatMessage.getUserId();
-
+        Map<String, String> json = new HashMap<>();
         switch(chatMessage.getMessageType()){
             case CREATE:
                 String createdRoomName = createRoom(senderId, session);
@@ -138,18 +141,17 @@ public class ChatRoomService {
             case JOIN:
                 sendMessageType(session, "JOIN", null);
                 chatMessage.setMessage(senderId + "님이 입장하셨습니다.");
-
                 Rooms joinedRoom = joinUser(senderId, session, roomName);
                 if(joinedRoom != null){
                     sendMessage(chatMessage.getMessage(), session, joinedRoom); }
-
                 break;
             case TALK :
                 sendMessageType(session, "TALK", null);
                 Rooms talkRoom = RoomList.get(roomName);
                 sendMessage(chatMessage.getMessage(),session, talkRoom);
                 break;
-            //answer, offer
+            case SDP_OFFER:
+                webRTCSignalingService.processSdpOffer(session, chatMessage);
         }
     }
 
