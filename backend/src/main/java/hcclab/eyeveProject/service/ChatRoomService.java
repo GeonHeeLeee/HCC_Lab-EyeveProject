@@ -9,6 +9,7 @@ import hcclab.eyeveProject.entity.Rooms;
 import hcclab.eyeveProject.entity.User;
 import hcclab.eyeveProject.repository.RoomRepository;
 import hcclab.eyeveProject.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.KurentoClient;
 import org.kurento.client.MediaPipeline;
@@ -29,16 +30,13 @@ import java.util.stream.Stream;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class ChatRoomService {
-
-    @Autowired
-    private RoomRepository roomRepository;
-    @Autowired
-    private UserRepository userRepository;
-
-    private WebRTCSignalingService webRTCSignalingService;
+    private final RoomRepository roomRepository;
+    private final UserRepository userRepository;
+    private final KurentoClient kurentoClient;
+    private final WebRTCSignalingService webRTCSignalingService;
     private ChatRoomMap chatRoomMap = ChatRoomMap.getInstance();
-
     private Map<String, Rooms> RoomList = chatRoomMap.getRoomList();
     private ObjectMapper objectMapper = new ObjectMapper();
 
@@ -46,6 +44,7 @@ public class ChatRoomService {
     방 생성 메서드
     - 방을 생성하고, 연관 관계 지정 후, DB 저장
     - 방 생성자는 방에 자동으로 참가
+    - 방 생성 시 마다 MediaPipeline 객체 생성
     - 반환 값으로 roomName(roomUUID를 반환)
      */
     @Transactional
@@ -53,6 +52,9 @@ public class ChatRoomService {
         User findUser = userRepository.findById(userId);
         Rooms createdRoom = new Rooms(findUser);
         UserSession userSession = new UserSession(findUser, session, null);
+
+        //방마다 MediaPipeline 생성
+        createdRoom.setMediaPipeline(kurentoClient.createMediaPipeline());
 
         roomRepository.save(createdRoom);
         createdRoom.addUserAndSession(userId, userSession);
@@ -138,7 +140,7 @@ public class ChatRoomService {
     public void handlerActions(WebSocketSession session, ChatMessage chatMessage) throws IOException {
         String roomName = chatMessage.getRoomName();
         String senderId = chatMessage.getUserId();
-        Map<String, String> json = new HashMap<>();
+
         switch(chatMessage.getMessageType()){
             case CREATE:
                 String createdRoomName = createRoom(senderId, session);
@@ -157,7 +159,13 @@ public class ChatRoomService {
                 sendMessage(chatMessage.getMessage(),session, talkRoom);
                 break;
             case SDP_OFFER:
-                webRTCSignalingService.processSdpOffer(session, chatMessage);
+                //메세지 받을 때 방 이름도 같이 받아야 함 또한 userId도 받아야함
+                Rooms offeredRoom = RoomList.get(roomName);
+                UserSession offeredUserSession = offeredRoom.getUserInRoomList().get(senderId);
+                WebRtcEndpoint webRtcEndpoint = new WebRtcEndpoint.Builder(offeredRoom.getPipeline()).build();
+                offeredUserSession.setWebRtcEndpoint(webRtcEndpoint);
+
+                webRTCSignalingService.processSdpOffer(offeredUserSession, chatMessage);
         }
     }
 

@@ -4,6 +4,7 @@ import hcclab.eyeveProject.domain.UserSession;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.kurento.client.MediaPipeline;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -30,6 +31,13 @@ public class Rooms {
     private Map<String, UserSession> userInRoomList = new HashMap<>();
 
     /*
+    방마다 존재해는 MediaPipeline
+    - 방 마다 한개씩 존재
+     */
+    @Transient
+    private MediaPipeline pipeline;
+
+    /*
     Rooms 생성자
     - 방 생성 시, 방 생성 시간을 초기화
     - 방 생성 시, DB User table에 해당 유저의 방 number 입력
@@ -47,4 +55,7 @@ public class Rooms {
         userInRoomList.put(userId, userSession);
     }
 
+    public void setMediaPipeline(MediaPipeline mediaPipeline){
+        this.pipeline = mediaPipeline;
+    }
 }
