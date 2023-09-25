@@ -1,6 +1,5 @@
 package hcclab.eyeveProject.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hcclab.eyeveProject.domain.ChatMessage;
 import hcclab.eyeveProject.domain.ChatRoomMap;
@@ -12,21 +11,15 @@ import hcclab.eyeveProject.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.KurentoClient;
-import org.kurento.client.MediaPipeline;
 import org.kurento.client.WebRtcEndpoint;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -36,9 +29,9 @@ public class ChatRoomService {
     private final UserRepository userRepository;
     private final KurentoClient kurentoClient;
     private final WebRTCSignalingService webRTCSignalingService;
-    private ChatRoomMap chatRoomMap = ChatRoomMap.getInstance();
-    private Map<String, Rooms> RoomList = chatRoomMap.getRoomList();
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ChatRoomMap chatRoomMap = ChatRoomMap.getInstance();
+    private final Map<String, Rooms> RoomList = chatRoomMap.getRoomList();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /*
     방 생성 메서드
@@ -76,7 +69,7 @@ public class ChatRoomService {
         Map<String, String> message = new HashMap<>();
         message.put("messageType", messageType);
         try {
-            if(messageType == "CREATE") {message.put("roomName", roomName);}
+            if(messageType.equals("CREATE")) {message.put("roomName", roomName);}
             String jsonMessage = objectMapper.writeValueAsString(message);
             session.sendMessage(new TextMessage(jsonMessage));
         } catch (IOException e) {
@@ -119,7 +112,7 @@ public class ChatRoomService {
      */
     public void sendMessage(String message, WebSocketSession session, Rooms room) {
         room.getUserInRoomList().values().parallelStream()
-                .map(userSession -> userSession.getWebSocketSession())
+                .map(UserSession::getWebSocketSession)
                 .filter(s -> s != session)
                 .forEach(s -> {
                     try {
@@ -162,10 +155,16 @@ public class ChatRoomService {
                 //메세지 받을 때 방 이름도 같이 받아야 함 또한 userId도 받아야함
                 Rooms offeredRoom = RoomList.get(roomName);
                 UserSession offeredUserSession = offeredRoom.getUserInRoomList().get(senderId);
+                //WebRTCEndpoint 생성
                 WebRtcEndpoint webRtcEndpoint = new WebRtcEndpoint.Builder(offeredRoom.getPipeline()).build();
                 offeredUserSession.setWebRtcEndpoint(webRtcEndpoint);
-
                 webRTCSignalingService.processSdpOffer(offeredUserSession, chatMessage);
+                break;
+            case ICE_CANDIDATE:
+                Rooms iceRoom = RoomList.get(roomName);
+                UserSession iceUserSession = iceRoom.getUserInRoomList().get(senderId);
+                webRTCSignalingService.processIceCandidate(iceUserSession, chatMessage);
+                break;
         }
     }
 
