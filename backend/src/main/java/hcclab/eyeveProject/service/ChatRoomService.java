@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hcclab.eyeveProject.domain.ChatMessage;
 import hcclab.eyeveProject.domain.ChatRoomMap;
+import hcclab.eyeveProject.domain.UserSession;
 import hcclab.eyeveProject.entity.Rooms;
 import hcclab.eyeveProject.entity.User;
 import hcclab.eyeveProject.repository.RoomRepository;
@@ -23,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -50,8 +52,10 @@ public class ChatRoomService {
     public String createRoom(String userId, WebSocketSession session) {
         User findUser = userRepository.findById(userId);
         Rooms createdRoom = new Rooms(findUser);
+        UserSession userSession = new UserSession(findUser, session, null);
+
         roomRepository.save(createdRoom);
-        createdRoom.addUserAndSession(userId, session);
+        createdRoom.addUserAndSession(userId, userSession);
         chatRoomMap.getRoomList().put(createdRoom.getRoomName(), createdRoom);
 
         log.info("방 생성 요청 - userId : {}, roomName : {}", findUser.getUserId(), createdRoom.getRoomName());
@@ -92,7 +96,8 @@ public class ChatRoomService {
         Rooms roomJoined = chatRoomMap.getRoomFromRoomList(roomName);
         if(roomJoined != null) {
             findUser.setRoom(roomJoined);
-            roomJoined.addUserAndSession(userId, session);
+            UserSession userSession = new UserSession(findUser, session, null);
+            roomJoined.addUserAndSession(userId, userSession);
 
             log.info("방 참가 요청 - userId : " + findUser.getUserId());
             log.info("방 참가 요청 - roomName : " + roomJoined.getRoomName());
@@ -112,6 +117,7 @@ public class ChatRoomService {
      */
     public void sendMessage(String message, WebSocketSession session, Rooms room) {
         room.getUserInRoomList().values().parallelStream()
+                .map(userSession -> userSession.getWebSocketSession())
                 .filter(s -> s != session)
                 .forEach(s -> {
                     try {
@@ -163,9 +169,12 @@ public class ChatRoomService {
     @Transactional
     public void removeUserFromRoom(WebSocketSession session) {
         RoomList.values().stream()
-                .filter(room -> room.getUserInRoomList().values().contains(session))
+                .filter(room -> room.getUserInRoomList().values().stream()
+                        .map(UserSession::getWebSocketSession)
+                        .collect(Collectors.toList())
+                        .contains(session))
                 .forEach(room -> room.getUserInRoomList().entrySet().removeIf(entry -> {
-                    if (entry.getValue().equals(session)) {
+                    if (entry.getValue().getWebSocketSession().equals(session)) {
                         User user = userRepository.findById(entry.getKey());
 
                         log.info("방 나가기 - 방에 남아 있는 인원 : " + entry.getKey());
@@ -178,6 +187,7 @@ public class ChatRoomService {
                     return false;
                 }));
     }
+
 
 }
 

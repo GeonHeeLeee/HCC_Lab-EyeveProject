@@ -15,4 +15,7 @@ public class ChatMessage {
     private String message;
 
     private String sdpOffer;
+
+    private IceCandidatePayload iceCandidate;
+
 }

@@ -37,4 +37,5 @@ public class SignalHandler extends TextWebSocketHandler {
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         chatRoomService.removeUserFromRoom(session);
     }
+
 }

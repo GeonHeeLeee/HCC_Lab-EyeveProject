@@ -1,5 +1,6 @@
 package hcclab.eyeveProject.entity;
 
+import hcclab.eyeveProject.domain.UserSession;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -22,11 +23,11 @@ public class Rooms {
 
     /*
     해당 방에 있는 유저의 List
-    - <userId, WebSocketSession> 저장
+    - <userId, UserSession> 저장
     - DB에 등록하지 않으므로 @Transient
      */
     @Transient
-    private Map<String, WebSocketSession> userInRoomList = new HashMap<>();
+    private Map<String, UserSession> userInRoomList = new HashMap<>();
 
     /*
     Rooms 생성자
@@ -40,10 +41,10 @@ public class Rooms {
     }
 
     /*
-    userInRoomList에 <userId, WebSocketSession> 추가
+    userInRoomList에 <userId, UserSession> 추가
      */
-    public void addUserAndSession(String userId, WebSocketSession session){
-        userInRoomList.put(userId, session);
+    public void addUserAndSession(String userId, UserSession userSession){
+        userInRoomList.put(userId, userSession);
     }
 
 }
