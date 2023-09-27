@@ -71,6 +71,7 @@ public class LoginController {
     public void autoLogin() {
     }
 
+
     /*
     로그아웃 메서드
     - request에서 session 삭제
