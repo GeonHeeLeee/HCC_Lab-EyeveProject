@@ -14,6 +14,7 @@ import {
 import useInput from '../../hooks/useInput';
 import { RootState } from '../../store/types/redux.type';
 import MypageMain from './MyPageMain';
+import MyPageNav from './MyPageNav';
 
 /*
     useEffect 이용해서 페이지 이동할 때 세션 관리 (별도 파일로 관리하면 좋을듯)
@@ -110,6 +111,14 @@ function MyPage() {
 
   return (
     <>
+      {/* props 설정해주기 */}
+      <MyPageNav
+        handleEnterMeeting={handleEnterMeeting}
+        handleCreateMeeting={handleCreateMeeting}></MyPageNav>
+      <MypageMain
+        handleEnterMeeting={handleEnterMeeting}
+        handleCreateMeeting={handleCreateMeeting}
+        meetingId={form.meetingId}></MypageMain>
       {render && <div>안녕하세요 {localStorage.getItem('userName')}님</div>}
       <button onClick={handleCreateMeeting}>미팅 생성</button>
       <div>
@@ -122,7 +131,6 @@ function MyPage() {
         />
         <button onClick={handleEnterMeeting}>참가하기</button>
       </div>
-      <MypageMain></MypageMain>
     </>
   );
 }
