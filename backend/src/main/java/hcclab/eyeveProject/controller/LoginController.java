@@ -1,5 +1,6 @@
 package hcclab.eyeveProject.controller;
 
+import hcclab.eyeveProject.domain.UserDTO;
 import hcclab.eyeveProject.entity.User;
 import hcclab.eyeveProject.service.LoginService;
 import lombok.extern.slf4j.Slf4j;
@@ -37,27 +38,25 @@ public class LoginController {
 
     /*
     로그인
-    - 로그인 성공 시 : 세션 생성 후 200 OK 반환
+    - 로그인 성공 시 : 세션 생성 후 200 OK와 로그인 유저 정보 반환
     - 로그인 실패 시 : 세션 생성 하지 않고 400 Bad Request 반환
      */
     @PostMapping("/users/login")
-<<<<<<< Updated upstream
-    public ResponseEntity<String> loginUser(@RequestBody User user,
-                                          HttpServletRequest request) {
-        boolean loginCheckResult = loginService.loginCheck(user);
-=======
     @ResponseBody
     public ResponseEntity<UserDTO> loginUser(@RequestBody User user,
-                                             HttpServletRequest request) {
+                                          HttpServletRequest request) {
         User loginCheckResult = loginService.loginCheck(user);
->>>>>>> Stashed changes
 
         log.info("로그인 사용자 이름 : " + user.getUserId() + ", 비밀번호 : " + user.getUserPassword());
         log.info("로그인 성공 여부 : " + loginCheckResult);
 
-        if (loginCheckResult) {
+        if (loginCheckResult != null) {
             loginService.createSession(request, user.getUserId());
-            return new ResponseEntity<String>(loginService.getUserNameById(user.getUserId()), HttpStatus.OK);
+            UserDTO userDTO = new UserDTO(loginCheckResult.getUserId(),
+                    loginCheckResult.getUserName(),
+                    loginCheckResult.getUserType(),
+                    loginCheckResult.getRoom());
+            return new ResponseEntity<>(userDTO, HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
@@ -72,11 +71,17 @@ public class LoginController {
     public void autoLogin() {
     }
 
+
+    /*
+    로그아웃 메서드
+    - request에서 session 삭제
+    - 이후 Cookie 생성 후, maxAge 0초로해서 response에 담아서 보냄
+     */
     @PostMapping("/users/logout")
     public ResponseEntity logoutUser(HttpServletRequest request,
-                                     HttpServletResponse response) {
+                                       HttpServletResponse response) {
         HttpSession session = request.getSession(false);
-        if (session != null) {
+        if(session != null) {
             session.invalidate();
         }
         Cookie cookie = new Cookie("JSESSIONID", null);

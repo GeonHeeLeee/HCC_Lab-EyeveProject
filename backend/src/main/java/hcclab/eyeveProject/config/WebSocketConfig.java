@@ -2,6 +2,8 @@ package hcclab.eyeveProject.config;
 
 import hcclab.eyeveProject.handler.SignalHandler;
 import lombok.RequiredArgsConstructor;
+import org.kurento.client.KurentoClient;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
@@ -22,4 +24,5 @@ public class WebSocketConfig implements WebSocketConfigurer {
         registry.addHandler(signalHandler, "/socket")
                 .setAllowedOrigins("*");
     }
+
 }

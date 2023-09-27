@@ -1,8 +1,11 @@
 package hcclab.eyeveProject.entity;
 
+import hcclab.eyeveProject.domain.UserSession;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.kurento.client.MediaPipeline;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.WebSocketSession;
 
 import javax.persistence.*;
@@ -16,27 +19,23 @@ public class Rooms {
 
     @GeneratedValue @Id
     private Long roomId;
-
     private String roomName;
-    @OneToMany(mappedBy = "room")
-    private List<User> users = new ArrayList<>();
-
     private LocalDateTime createdTime;
-
-     /*
-     연관관계 편의 메서드
-      */
-    public void addUser(User user) {
-        users.add(user);
-        user.setRoom(this);
-    }
 
     /*
     해당 방에 있는 유저의 List
+    - <userId, UserSession> 저장
     - DB에 등록하지 않으므로 @Transient
      */
     @Transient
-    private Map<String, WebSocketSession> userInRoomList = new HashMap<>();
+    private Map<String, UserSession> userInRoomList = new HashMap<>();
+
+    /*
+    방마다 존재해는 MediaPipeline
+    - 방 마다 한개씩 존재
+     */
+    @Transient
+    private MediaPipeline pipeline;
 
     /*
     Rooms 생성자
@@ -45,15 +44,18 @@ public class Rooms {
      */
     public Rooms(User user) {
         this.roomName = UUID.randomUUID().toString();
-        addUser(user);
+        user.setRoom(this);
         this.createdTime = LocalDateTime.now();
     }
 
     /*
-    userInRoomList에 <userId, WebSocketSession> 추가
+    userInRoomList에 <userId, UserSession> 추가
      */
-    public void addUserAndSession(String userId, WebSocketSession session){
-        userInRoomList.put(userId, session);
+    public void addUserAndSession(String userId, UserSession userSession){
+        userInRoomList.put(userId, userSession);
     }
 
+    public void setMediaPipeline(MediaPipeline mediaPipeline){
+        this.pipeline = mediaPipeline;
+    }
 }
