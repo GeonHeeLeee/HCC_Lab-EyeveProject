@@ -9,7 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 @Controller
 @Slf4j
@@ -38,9 +41,16 @@ public class LoginController {
     - 로그인 실패 시 : 세션 생성 하지 않고 400 Bad Request 반환
      */
     @PostMapping("/users/login")
+<<<<<<< Updated upstream
     public ResponseEntity<String> loginUser(@RequestBody User user,
                                           HttpServletRequest request) {
         boolean loginCheckResult = loginService.loginCheck(user);
+=======
+    @ResponseBody
+    public ResponseEntity<UserDTO> loginUser(@RequestBody User user,
+                                             HttpServletRequest request) {
+        User loginCheckResult = loginService.loginCheck(user);
+>>>>>>> Stashed changes
 
         log.info("로그인 사용자 이름 : " + user.getUserId() + ", 비밀번호 : " + user.getUserPassword());
         log.info("로그인 성공 여부 : " + loginCheckResult);
@@ -62,4 +72,18 @@ public class LoginController {
     public void autoLogin() {
     }
 
+    @PostMapping("/users/logout")
+    public ResponseEntity logoutUser(HttpServletRequest request,
+                                     HttpServletResponse response) {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        Cookie cookie = new Cookie("JSESSIONID", null);
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+        log.info("response - Cookie : " + cookie.getValue());
+
+        return new ResponseEntity(HttpStatus.OK);
+    }
 }
