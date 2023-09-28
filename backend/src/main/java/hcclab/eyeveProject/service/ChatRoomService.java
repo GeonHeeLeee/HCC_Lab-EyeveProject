@@ -165,6 +165,13 @@ public class ChatRoomService {
                 UserSession iceUserSession = iceRoom.getUserInRoomList().get(senderId);
                 webRTCSignalingService.processIceCandidate(iceUserSession, chatMessage);
                 break;
+
+            /*
+            이후 사람들과 연결을 해야함. 사용자가 서버로 보내는 하나의 stream을 mediapipeline과 연결하고
+            나머지 방에 있는 사람들과 webrtcendpoint.connect(receiver)을 연결을 모두 해야함.
+            그리고 새로운 사람과 연결되었을때나 연결이 끊어졌을때 업데이트하는 로직도 작성해야함.
+            상대방이 나갔을때는 front에 나갔음을 websocket으로 알려주면 됨.
+             */
         }
     }
 

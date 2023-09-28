@@ -35,7 +35,8 @@ public class WebRTCSignalingService {
 
         /*
         addIceCandidateListener
-        새로운 참가자가 방에 참여하면서 ICE 후보자 정보를 KMS에 전송
+        - 새로운 참가자가 방에 참여하면서 ICE 후보자 정보를 KMS에 전송
+        - Ice 후보자가 발견 되었을 때, 참가자에게 전송
          */
         webRtcEndpoint.addIceCandidateFoundListener(event -> {
             try {
@@ -49,8 +50,9 @@ public class WebRTCSignalingService {
         String sdpOffer = message.getSdpOffer();
         String sender = message.getUserId();
 
-        webRtcEndpoint.gatherCandidates(); //이 부분이 잘 이해가 가지 않음
+        webRtcEndpoint.gatherCandidates(); //ice 후보자 수집 - 이 부분이 잘 이해가 가지 않음
 
+        //sdp answer 생성 후 다시 클라이언트에게 보내기
         String sdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
         String jsonSdpAnswer = makeSdpAnswerMessage(sdpAnswer, sender);
         userSession.getWebSocketSession().sendMessage(new TextMessage(jsonSdpAnswer));
