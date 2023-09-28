@@ -13,6 +13,9 @@ import {
 } from '../../store/modules/socketSlice';
 import useInput from '../../hooks/useInput';
 import { RootState } from '../../store/types/redux.type';
+
+import { sessionExpiration } from '../../store/modules/loginUsernameSlice';
+import { logout } from '../../store/modules/isLoginSlice';
 import MypageMain from './MyPageMain';
 import MyPageNav from './MyPageNav';
 
@@ -30,21 +33,49 @@ function MyPage() {
   const { networkInterface } = useSelector((state: RootState) => state.network);
 
   const handleEnterMeeting = (_: React.MouseEvent<HTMLButtonElement>) => {
-    const socket = io();
+    // const socket = io();
+    const socket = new WebSocket('ws://localhost:8081/socket');
 
-    socket.on('connect', () => {});
+    socket.onopen = function () {
+      socket.send(
+        JSON.stringify({
+          roomName: '', // TODO: roomName Input 에서 받아오기
+          userId: 'aaa', // TODO: 바꿔야 함
+          messageType: 'JOIN',
+        })
+      );
+      console.log('socket is send');
+    };
 
-    socket.on('disconnect', () => {
-      console.log(socket.id);
-    });
+    socket.onmessage = function (event) {
+      console.log(event.data, event);
+    };
 
-    socket.on('connect_error', (error) => {
-      alert('미팅 참여에 실패하였습니다.');
-      console.error(error);
-      socket.close();
-      dispatch(clearSocket({}));
-    });
-    dispatch(setSocket({ socket }));
+    let i = 0;
+    socket.onerror = (error) => {
+      console.log(error);
+      if (i == 2) {
+        socket.close();
+      }
+      i++;
+    };
+
+    socket.onclose = function (event) {
+      console.log(event);
+    };
+    // socket.on('connect', () => {});
+
+    // socket.on('disconnect', () => {
+    //   console.log(socket.id);
+    // });
+
+    // socket.on('connect_error', (error) => {
+    //   alert('미팅 참여에 실패하였습니다.');
+    //   console.error(error);
+    //   socket.close();
+    //   dispatch(clearSocket({}));
+    // });
+    // dispatch(setSocket({ socket }));
   };
 
   // Cookie에 존재하는 SESSIONID 확인
@@ -79,6 +110,18 @@ function MyPage() {
   //   checkUserAuth();
   // }, []);
 
+  const handleLogoutSubmit = (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    networkInterface.signOut().then((res) => {
+      localStorage.removeItem('userName');
+      dispatch(sessionExpiration());
+      dispatch(logout());
+      alert('로그아웃');
+      navigate('/');
+    });
+  };
+
   const handleCreateMeeting = () => {
     // const endpoint = 'http://localhost:8081'
     const endpoint = process.env.REACT_APP_SERVER_API!;
@@ -106,7 +149,9 @@ function MyPage() {
       i++;
     };
 
-    socket.onclose = function () {};
+    socket.onclose = function (event) {
+      console.log(event);
+    };
   };
 
   return (

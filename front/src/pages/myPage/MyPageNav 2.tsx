@@ -1,29 +1,6 @@
 import styles from '../../styles/mypage.module.css';
 
-import { propsType } from './mypage.type';
-
-import { sessionExpiration } from '../../store/modules/loginUsernameSlice';
-import { logout } from '../../store/modules/isLoginSlice';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../store/types/redux.type';
-
-function MyPageNav({ handleEnterMeeting, handleCreateMeeting }: propsType) {
-  const { networkInterface } = useSelector((state: RootState) => state.network);
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-
-  const handleLogoutSubmit = (e: React.MouseEvent) => {
-    e.preventDefault();
-
-    networkInterface.signOut().then((res) => {
-      localStorage.removeItem('userName');
-      dispatch(sessionExpiration());
-      dispatch(logout());
-      alert('로그아웃');
-      navigate('/');
-    });
-  };
+function MyPageNav() {
   return (
     <>
       <nav
@@ -46,16 +23,19 @@ function MyPageNav({ handleEnterMeeting, handleCreateMeeting }: propsType) {
               </a>
             </li>
             <li className={`${styles.navItem} sign-in ${styles.displayCenter}`}>
-              <a href='#' className='nav-link' onClick={handleLogoutSubmit}>
+              <a href='#' className='nav-link'>
                 로그아웃
               </a>
             </li>
-
             <li className={`${styles.navItem}`}>
               <button
-                className='btn btn-primary btn-lg text-light font-weight-bold '
-                onClick={handleCreateMeeting}>
-                수업 시작하기
+                className={`btn btn-outline-secondary btn-lg text-primary font-weight-bold`}>
+                회의 참여하기
+              </button>
+            </li>
+            <li className={`${styles.navItem}`}>
+              <button className='btn btn-primary btn-lg text-light font-weight-bold '>
+                회의 시작하기
               </button>
             </li>
           </ul>

@@ -4,14 +4,15 @@ import '../../styles/bootstrap.css';
 import VideoCallIcon from '@mui/icons-material/VideoCall';
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 
+import useInput from '../../hooks/useInput';
+
 import { propsType } from './mypage.type';
 
-function MypageMain({
-  handleEnterMeeting,
-  handleCreateMeeting,
-  meetingId,
-  onChange,
-}: propsType) {
+const initialForm = { meetingId: '' };
+
+function MypageMain({ handleEnterMeeting, handleCreateMeeting }: propsType) {
+  const [form, onChange] = useInput(initialForm);
+
   return (
     <>
       <main>
@@ -38,7 +39,7 @@ function MypageMain({
                   onClick={handleCreateMeeting}>
                   <VideoCallIcon
                     style={{ marginRight: '1rem' }}></VideoCallIcon>
-                  회의 시작하기
+                  수업 시작하기
                 </button>
               </li>
               <li style={{ paddingLeft: '3rem' }}>
@@ -48,18 +49,19 @@ function MypageMain({
                   <KeyboardIcon style={{ marginRight: '1rem' }}></KeyboardIcon>
                   <input
                     type='text'
-                    placeholder='회의 코드 입력'
+                    placeholder='강의실 코드 입력'
                     style={{ border: 'none' }}
-                    name=''
+                    name='meetingId'
                     className=''
+                    onChange={onChange}
                   />
                 </button>
               </li>
               <button
-                className={`text-dark font-weight-bold ${styles.cursorPointer}`}
-                style={{ paddingLeft: '1rem' }}
+                className={`btn btn-primary btn-lg text-light font-weight-bold ${styles.displayCenter}`}
+                style={{ marginLeft: '0.5rem' }}
                 onClick={handleEnterMeeting}>
-                참여
+                참가
               </button>
             </ul>
           </div>
