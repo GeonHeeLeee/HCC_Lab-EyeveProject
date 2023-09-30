@@ -12,7 +12,6 @@ const useInput = <T>(initialForm: T) => {
     },
     [form]
   );
-  console.log(form);
 
   const reset = useCallback(() => {
     setForm(initialForm);

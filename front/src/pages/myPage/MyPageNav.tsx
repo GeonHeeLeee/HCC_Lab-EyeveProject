@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/types/redux.type';
 
-function MyPageNav({ handleEnterMeeting, handleCreateMeeting }: propsType) {
+function MyPageNav({ handleCreateMeeting }: propsType) {
   const { networkInterface } = useSelector((state: RootState) => state.network);
   const navigate = useNavigate();
   const dispatch = useDispatch();

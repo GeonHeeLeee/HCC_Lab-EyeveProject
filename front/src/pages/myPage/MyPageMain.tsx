@@ -1,6 +1,8 @@
 import styles from '../../styles/mypage.module.css';
 import '../../styles/bootstrap.css';
 
+import { useDispatch } from 'react-redux';
+
 import VideoCallIcon from '@mui/icons-material/VideoCall';
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 
@@ -8,10 +10,50 @@ import useInput from '../../hooks/useInput';
 
 import { propsType } from './mypage.type';
 
+import { clearSocket, setSocket } from '../../store/modules/socketSlice';
+
 const initialForm = { meetingId: '' };
 
-function MypageMain({ handleEnterMeeting, handleCreateMeeting }: propsType) {
+function MypageMain({ handleCreateMeeting }: propsType) {
   const [form, onChange] = useInput(initialForm);
+  const dispatch = useDispatch();
+
+  // 참가 버튼 눌렀을 떄 socket에 입력받은 roomId와 userId 담아서 소켓 전송
+  const handleEnterMeeting = (_: React.MouseEvent<HTMLButtonElement>) => {
+    const socket = new WebSocket('ws://localhost:8081/socket');
+
+    socket.onopen = function () {
+      socket.send(
+        JSON.stringify({
+          roomName: form.meetingId,
+          userId: localStorage.getItem('userName'),
+          messageType: 'JOIN',
+        })
+      );
+      console.log('socket is send');
+    };
+
+    socket.onmessage = function (event) {
+      console.log(event.data, event);
+      // dispatch(setSocket(event.data));
+    };
+
+    let i = 0;
+    socket.onerror = (error) => {
+      console.log(error);
+      if (i == 2) {
+        socket.close();
+
+        alert('미팅 참여에 실패하였습니다.');
+        dispatch(clearSocket({}));
+      }
+      i++;
+    };
+
+    socket.onclose = function (event) {
+      console.log(event);
+    };
+  };
 
   return (
     <>
@@ -23,13 +65,13 @@ function MypageMain({ handleEnterMeeting, handleCreateMeeting }: propsType) {
             <h1 style={{ fontSize: '3rem' }}>
               모든 사용자를 위한 영상 통화 및 화상 회의
             </h1>
-            <p style={{ fontSize: '20px' }}>
+            <p style={{ fontSize: '20px', marginTop: '2rem' }}>
               실시간 온라인교육에서 학습몰입과 참여를 강화하기 위한 AI 알고리즘
               기반 맞춤형 피드백 시스템
             </p>
             <ul
               className={`${styles.displayCenter}`}
-              style={{ padding: '0', paddingTop: '2rem' }}>
+              style={{ padding: '0', paddingTop: '2rem', marginTop: '4rem' }}>
               <li
                 style={{
                   listStyle: 'none',
@@ -39,7 +81,7 @@ function MypageMain({ handleEnterMeeting, handleCreateMeeting }: propsType) {
                   onClick={handleCreateMeeting}>
                   <VideoCallIcon
                     style={{ marginRight: '1rem' }}></VideoCallIcon>
-                  수업 시작하기
+                  수업 시작
                 </button>
               </li>
               <li style={{ paddingLeft: '3rem' }}>
