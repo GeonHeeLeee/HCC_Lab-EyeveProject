@@ -1,0 +1,32 @@
+import {Socket} from "socket.io-client";
+import {HttpInterface} from "../../api/http/httpInterface";
+
+export type IsLogin = {
+  value: boolean;
+}
+export type LoginUsername = {
+  username: string;
+}
+
+export type ShowSignup = {
+  value: boolean;
+}
+
+// TODO: any 변경
+export type SocketState = {
+  socket: Socket | null,
+  otherSockets: (Socket | string)[];  // socket id or socket instance?
+}
+
+export type Network = {
+  networkInterface: HttpInterface,
+}
+
+export type RootState = {
+  isLogin: IsLogin;
+  loginUsername: LoginUsername;
+  showSignup: ShowSignup;
+  socket: SocketState,
+  network: Network,
+}
+
