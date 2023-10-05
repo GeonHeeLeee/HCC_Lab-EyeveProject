@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import Video from '../../components/meetingRoom/video/video';
 
 import { WebRTCUser } from './rtc.type';
 
@@ -25,6 +26,12 @@ const userVideo = () => {
   const [users, setUsers] = useState<Array<WebRTCUser>>([]);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
+
+  const closeReceivePC = useCallback((id: string) => {
+    if (!receivePCsRef.current[id]) return;
+    receivePCsRef.current[id].close();
+    delete receivePCsRef.current[id];
+  }, []);
 
   const createReceiverOffer = useCallback(
     async (pc: RTCPeerConnection, senderSocketID: string) => {
@@ -95,7 +102,7 @@ const userVideo = () => {
     }
   }, []);
 
-  const createRecivePC = useCallback(
+  const createReceivePC = useCallback(
     (id: string) => {
       try {
         console.log(`socketID(${id}) user entered`);
@@ -200,7 +207,7 @@ const userVideo = () => {
   }, [createSenderOffer, createSenderPeerConnection]);
 
   useEffect(() => {
-    socketRef.current = new WebSocket('ws://localhost:8081/socket');
+    socketRef.current = new WebSocket(SOCKET_SERVER_URL);
     getLocalStream();
 
     socketRef.current.onmessage = function (e) {
@@ -208,10 +215,10 @@ const userVideo = () => {
 
       switch (data.messageType) {
         case 'userEnter':
-          createRecivePC(data.id);
+          createReceivePC(data.id);
           break;
         case 'allUsers':
-          data.users.forEach((user) => createReceivePC(user.id));
+          data.users.forEach((user: any) => createReceivePC(user.id));
           break;
         case 'userExit':
           closeReceivePC(data.id);
@@ -232,9 +239,91 @@ const userVideo = () => {
           };
           break;
 
+        case 'getSenderCandidate':
+          async (data: { candidate: RTCIceCandidateInit }) => {
+            try {
+              if (!(data.candidate && sendPCRef.current)) return;
+              console.log('get sender candidate');
+              await sendPCRef.current.addIceCandidate(
+                new RTCIceCandidate(data.candidate)
+              );
+              console.log('candidate add success');
+            } catch (error) {
+              console.log(error);
+            }
+          };
+          break;
+
+        case 'getReceiverAnswer':
+          async (data: { id: string; sdp: RTCSessionDescription }) => {
+            try {
+              console.log(`get socketID(${data.id}'s answer)`);
+              const pc: RTCPeerConnection = receivePCsRef.current[data.id];
+              if (!pc) return;
+              await pc.setRemoteDescription(data.sdp);
+              console.log(`socketID(${data.id})'s set remote sdp success`);
+            } catch (error) {
+              console.log(error);
+            }
+          };
+          break;
+
+        case 'getReceiverCandidate':
+          async (data: { id: string; candidate: RTCIceCandidateInit }) => {
+            try {
+              console.log(data);
+              console.log(`get socketID(${data.id})'s candidate`);
+              const pc: RTCPeerConnection = receivePCsRef.current[data.id];
+              if (!(pc && data.candidate)) return;
+              await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+              console.log(`socketID(${data.id})'s candidate add success`);
+            } catch (error) {
+              console.log(error);
+            }
+          };
+          break;
+
         default:
+          console.log('error');
+
           break;
       }
+      return () => {
+        if (socketRef.current) {
+          // socketRef.current.disconnect();
+        }
+        if (sendPCRef.current) {
+          sendPCRef.current.close();
+        }
+        users.forEach((user) => closeReceivePC(user.id));
+      };
+      // eslint-disable-next-line
     };
-  });
+  }, [
+    closeReceivePC,
+    createReceivePC,
+    createSenderOffer,
+    createSenderPeerConnection,
+    getLocalStream,
+  ]);
+  return (
+    <div>
+      <video
+        style={{
+          width: 240,
+          height: 240,
+          margin: 5,
+          backgroundColor: 'black',
+        }}
+        muted
+        ref={localVideoRef}
+        autoPlay
+      />
+      {users.map((user, index) => (
+        <Video key={index} stream={user.stream} />
+      ))}
+    </div>
+  );
 };
+
+export default userVideo;
