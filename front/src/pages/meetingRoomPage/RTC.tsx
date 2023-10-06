@@ -19,13 +19,15 @@ const pc_config = {
 const SOCKET_SERVER_URL = 'ws://localhost:8081/socket';
 
 const userVideo = () => {
-  const socketRef = useRef<WebSocket>();
+  const socketRef = useRef<WebSocket>(); // 서버와 통신할 소켓
   const localStreamRef = useRef<MediaStream>();
-  const sendPCRef = useRef<RTCPeerConnection>();
+  const sendPCRef = useRef<RTCPeerConnection>(); // 자신의 MediaStream 서버에게 전송할 RTCPeerConnection
+  // 같은 방에 참가한 다른 user들의 MediaStream을 서버에서 전송받을 RTCPeerConnetion 목록
+  // receivePCs[socket id] = pc 형식 (추후 수정)
   const receivePCsRef = useRef<{ [socketId: string]: RTCPeerConnection }>({});
   const [users, setUsers] = useState<Array<WebRTCUser>>([]);
 
-  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const localVideoRef = useRef<HTMLVideoElement>(null); // 자신의 MediaStream 출력할 video 태그의 ref
 
   const closeReceivePC = useCallback((id: string) => {
     if (!receivePCsRef.current[id]) return;
@@ -33,6 +35,9 @@ const userVideo = () => {
     delete receivePCsRef.current[id];
   }, []);
 
+  // senderSocketID user의 MediaStream을 전송받을 RTCPeerConnection의 offer를 생성
+  // RTCSessionDescription을 해당 RTCPeerConnection의 localDescription에 지정
+  // RTCSessionDescription을 소켓을 통해 서버로 전송
   const createReceiverOffer = useCallback(
     async (pc: RTCPeerConnection, senderSocketID: string) => {
       try {
@@ -62,12 +67,17 @@ const userVideo = () => {
     []
   );
 
+  // socketID user의 MediaStream을 받기 위한 RTCPeerConnection 생성
+  // receivePCs 변수에 key-value 형식으로 생성한 RTCPeerConnection 저장
+  // 생성된 RTCPeerConnection 반환
   const createReceiverPeerConnection = useCallback((socketID: string) => {
     try {
       const pc = new RTCPeerConnection(pc_config);
 
       receivePCsRef.current = { ...receivePCsRef.current, [socketID]: pc };
 
+      // offer 또는 answer signal을 생성한 후부터 본인의 RTCIceCandidate 정보 이벤트가 발생
+      // 본인의 RTCIceCandidate 정보를 Socket을 통해 서버로 전송
       pc.onicecandidate = (e) => {
         if (!(e.candidate && socketRef.current)) return;
         console.log('receiver PC onicecandidate');
@@ -83,10 +93,13 @@ const userVideo = () => {
         };
       };
 
+      // ICE connection 상태가 변경되었을 때의 log
       pc.oniceconnectionstatechange = (e) => {
         console.log(e);
       };
 
+      // 상대방의 RTCSessionDescription을 본인의 RTCPeerConnection에서의 remoteSessionDescription으로 지정하면 상대방의 track 데이터에 대한 이벤트가 발생
+      // users 변수에 stream 등록
       pc.ontrack = (e) => {
         console.log('ontrack success');
         setUsers((oldUsers) =>
@@ -102,6 +115,7 @@ const userVideo = () => {
     }
   }, []);
 
+  // room에 참가하느 다른 user들의 MediaStream을 받을 RTCPeerConnection을 생성하고 서버에 offer 전송
   const createReceivePC = useCallback(
     (id: string) => {
       try {
@@ -116,6 +130,9 @@ const userVideo = () => {
     [createReceiverOffer, createReceiverPeerConnection]
   );
 
+  // 자신의 MediaStream을 서버에게 보낼 RTCPeerConnection의 offer를 생성
+  // RTCSessionDescription을 해당 RTCPeerConnection의 localDescription에 지정
+  // RTCSessionDescription을 소켓을 통해서 서버로 전송
   const createSenderOffer = useCallback(async () => {
     try {
       if (!sendPCRef.current) return;
@@ -145,9 +162,13 @@ const userVideo = () => {
     }
   }, []);
 
+  // 자신의 MediaStream을 서버로 보내기 위한 RTCPeerConnection을 생성하고 localStream을 등록
+  // 생성된 RTCPeerConnection 반환
   const createSenderPeerConnection = useCallback(() => {
     const pc = new RTCPeerConnection(pc_config);
 
+    // offer 또는 answer signal을 생성한 후부터 본인의 RTCIceCandidate 정보 이벤트가 발생
+    // 본인의 RTCIceCandidate 정보를 Socket을 통해 서버로 전송
     pc.onicecandidate = (e) => {
       if (!(e.candidate && socketRef.current)) return;
       console.log('sender PC onicecandidate');
@@ -160,6 +181,8 @@ const userVideo = () => {
         );
       };
     };
+
+    // ICE connection 상태가 변경됐을 때의 log
     pc.oniceconnectionstatechange = (e) => {
       console.log(e);
     };
@@ -214,17 +237,18 @@ const userVideo = () => {
       let data = JSON.parse(e.data);
 
       switch (data.messageType) {
-        case 'userEnter':
+        case 'userEnter': // 해당 user의 MediaStream을 받을 RTCPeerConnection을 생성하고 서버로 offer 보냄
           createReceivePC(data.id);
           break;
-        case 'allUsers':
+        case 'allUsers': // 해당 user들의 MediaStream을 받을 RTCPeerConnection을 생성하고 서버로 offer 보냄
           data.users.forEach((user: any) => createReceivePC(user.id));
           break;
-        case 'userExit':
+        case 'userExit': // 해당 userdml MediaStream을 받기 위해 연결한 RTCPeerConnetion을 닫고, 목록에서 삭제
           closeReceivePC(data.id);
           setUsers((users) => users.filter((user) => user.id !== data.id));
           break;
-        case 'getSenderAnswer':
+        case 'getSenderAnswer': // 해당 RTCPeerConnection의 remoteDescription으로 sdp를 지정
+          // TODO: 소켓을 통해 받아온 데이터명 확인해서 data 변수 바꿔주기
           async (data: { sdp: RTCSessionDescription }) => {
             try {
               if (!sendPCRef.current) return;
@@ -239,7 +263,7 @@ const userVideo = () => {
           };
           break;
 
-        case 'getSenderCandidate':
+        case 'getSenderCandidate': // 해당 RTCPeerConnection에 RTCIceCandidate 추가
           async (data: { candidate: RTCIceCandidateInit }) => {
             try {
               if (!(data.candidate && sendPCRef.current)) return;
@@ -254,7 +278,7 @@ const userVideo = () => {
           };
           break;
 
-        case 'getReceiverAnswer':
+        case 'getReceiverAnswer': // 해당 RTCPeerConnection의 remoteDescription으로 sdp 지정
           async (data: { id: string; sdp: RTCSessionDescription }) => {
             try {
               console.log(`get socketID(${data.id}'s answer)`);
@@ -268,7 +292,7 @@ const userVideo = () => {
           };
           break;
 
-        case 'getReceiverCandidate':
+        case 'getReceiverCandidate': // 해당 RTCPeerConnection에 RTCIceCandidate 추가
           async (data: { id: string; candidate: RTCIceCandidateInit }) => {
             try {
               console.log(data);
