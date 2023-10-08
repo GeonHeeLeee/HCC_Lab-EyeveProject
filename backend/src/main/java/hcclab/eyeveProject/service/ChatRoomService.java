@@ -71,7 +71,7 @@ public class ChatRoomService {
         Map<String, String> message = new HashMap<>();
         message.put("messageType", messageType);
         try {
-            if(messageType.equals("CREATE")) {message.put("roomName", roomName);}
+            if(messageType.equals("CREATE") || messageType.equals("JOIN")) {message.put("roomName", roomName);}
             String jsonMessage = objectMapper.writeValueAsString(message);
             session.sendMessage(new TextMessage(jsonMessage));
         } catch (IOException e) {
