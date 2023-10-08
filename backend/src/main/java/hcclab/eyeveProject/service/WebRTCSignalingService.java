@@ -7,6 +7,7 @@ import hcclab.eyeveProject.domain.ChatRoomMap;
 import hcclab.eyeveProject.domain.IceCandidatePayload;
 import hcclab.eyeveProject.domain.UserSession;
 import hcclab.eyeveProject.entity.Rooms;
+import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
@@ -17,6 +18,7 @@ import java.util.Map;
 
 
 @Service
+@Slf4j
 public class WebRTCSignalingService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -106,6 +108,8 @@ public class WebRTCSignalingService {
     public void createWebRTCEp(Rooms roomJoined, UserSession userSession) {
         WebRtcEndpoint webRtcEndpoint = new WebRtcEndpoint.Builder(roomJoined.getPipeline()).build();
         userSession.setWebRtcEndpoint(webRtcEndpoint);
+
+        log.info(String.format("%s의 webRTCEp 생성", userSession.getUser().getUserId()));
     }
 
     /*
@@ -117,6 +121,9 @@ public class WebRTCSignalingService {
             if(otherUserSession != userSession) {
                 otherUserSession.getWebRtcEndpoint().connect(userSession.getWebRtcEndpoint());
                 userSession.getWebRtcEndpoint().connect(otherUserSession.getWebRtcEndpoint());
+
+                log.info(String.format("%s와 %s 간 WebRTCEp 연결", otherUserSession.getUser().getUserId(),
+                        userSession.getUser().getUserId()));
             }
         }
     }
