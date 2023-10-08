@@ -44,7 +44,9 @@ public class WebRTCSignalingService {
             try {
                 IceCandidate iceCandidate = event.getCandidate();
                 String jsonMessage = makeIceCandidateMessage(iceCandidate);
-                userSession.getWebSocketSession().sendMessage(new TextMessage(jsonMessage));
+                synchronized(userSession.getWebSocketSession()) {
+                    userSession.getWebSocketSession().sendMessage(new TextMessage(jsonMessage));
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
