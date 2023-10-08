@@ -14,5 +14,5 @@ public class UserSession {
     private WebSocketSession webSocketSession;
     private WebRtcEndpoint webRtcEndpoint;
 
-    //이렇게 하는 것도 좋을듯
+    //이후 필요 시 sdp 정보, ice 정보 들도 넣어서 관리하면 좋을 듯
 }
