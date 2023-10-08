@@ -99,11 +99,19 @@ public class WebRTCSignalingService {
         userSession.getWebRtcEndpoint().addIceCandidate(iceCandidate);
     }
 
+    /*
+    WebRTCEndpoint 생성 메서드
+    - 생성 후, 해당 userSession에 WebRTCEndpoint로 등록
+     */
     public void createWebRTCEp(Rooms roomJoined, UserSession userSession) {
         WebRtcEndpoint webRtcEndpoint = new WebRtcEndpoint.Builder(roomJoined.getPipeline()).build();
         userSession.setWebRtcEndpoint(webRtcEndpoint);
     }
 
+    /*
+    방에 있는 사람들과 WebRTCEndpoint 연결
+    - 자신을 제외한 방에 있는 사람들과 WebRTCEndpoint 연결하기
+     */
     public void connectWebRTCEp(Rooms roomJoined, UserSession userSession) {
         for(UserSession otherUserSession : roomJoined.getUserInRoomList().values()){
             if(otherUserSession != userSession) {

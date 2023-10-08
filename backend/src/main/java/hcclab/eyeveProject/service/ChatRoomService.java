@@ -48,6 +48,8 @@ public class ChatRoomService {
 
         //방마다 MediaPipeline 생성
         createdRoom.setMediaPipeline(kurentoClient.createMediaPipeline());
+        webRTCSignalingService.createWebRTCEp(createdRoom,userSession);
+
 
         roomRepository.save(createdRoom);
         createdRoom.addUserAndSession(userId, userSession);
@@ -92,13 +94,14 @@ public class ChatRoomService {
 
         if(roomJoined != null) {
             findUser.setRoom(roomJoined);
-            UserSession userSession = new UserSession(findUser, session, null);
+            UserSession newUserSession = new UserSession(findUser, session, null);
+
             //WebRTCEndpoint 생성
-            webRTCSignalingService.createWebRTCEp(roomJoined, userSession);
-            roomJoined.addUserAndSession(userId, userSession);
+            webRTCSignalingService.createWebRTCEp(roomJoined, newUserSession);
+            roomJoined.addUserAndSession(userId, newUserSession);
 
             //방에 있는 사용자들과 WebRTCEndpoint 연결하기
-            webRTCSignalingService.connectWebRTCEp(roomJoined, userSession);
+            webRTCSignalingService.connectWebRTCEp(roomJoined, newUserSession);
 
             log.info("방 참가 요청 - userId : " + findUser.getUserId());
             log.info("방 참가 요청 - roomName : " + roomJoined.getRoomName());
