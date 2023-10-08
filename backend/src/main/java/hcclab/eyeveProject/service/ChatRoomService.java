@@ -152,9 +152,9 @@ public class ChatRoomService {
                 break;
 
             case JOIN:
-                sendMessageType(session, "JOIN", null);
-                chatMessage.setMessage(senderId + "님이 입장하셨습니다.");
                 Rooms joinedRoom = joinUser(senderId, session, roomName);
+                sendMessageType(session, "JOIN", roomName);
+                chatMessage.setMessage(senderId + "님이 입장하셨습니다.");
                 if(joinedRoom != null){
                     //sendMessage(chatMessage.getMessage(), session, joinedRoom);
                 }
