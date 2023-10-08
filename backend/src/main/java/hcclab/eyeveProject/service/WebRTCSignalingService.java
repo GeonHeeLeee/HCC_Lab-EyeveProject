@@ -7,6 +7,7 @@ import hcclab.eyeveProject.domain.ChatRoomMap;
 import hcclab.eyeveProject.domain.IceCandidatePayload;
 import hcclab.eyeveProject.domain.UserSession;
 import hcclab.eyeveProject.entity.Rooms;
+import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
@@ -17,6 +18,7 @@ import java.util.Map;
 
 
 @Service
+@Slf4j
 public class WebRTCSignalingService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -97,6 +99,33 @@ public class WebRTCSignalingService {
                 new IceCandidate(payload.getCandidate(), payload.getSdpMid(), payload.getSdpMLineIndex());
 
         userSession.getWebRtcEndpoint().addIceCandidate(iceCandidate);
+    }
+
+    /*
+    WebRTCEndpoint 생성 메서드
+    - 생성 후, 해당 userSession에 WebRTCEndpoint로 등록
+     */
+    public void createWebRTCEp(Rooms roomJoined, UserSession userSession) {
+        WebRtcEndpoint webRtcEndpoint = new WebRtcEndpoint.Builder(roomJoined.getPipeline()).build();
+        userSession.setWebRtcEndpoint(webRtcEndpoint);
+
+        log.info(String.format("%s의 webRTCEp 생성", userSession.getUser().getUserId()));
+    }
+
+    /*
+    방에 있는 사람들과 WebRTCEndpoint 연결
+    - 자신을 제외한 방에 있는 사람들과 WebRTCEndpoint 연결하기
+     */
+    public void connectWebRTCEp(Rooms roomJoined, UserSession userSession) {
+        for(UserSession otherUserSession : roomJoined.getUserInRoomList().values()){
+            if(otherUserSession != userSession) {
+                otherUserSession.getWebRtcEndpoint().connect(userSession.getWebRtcEndpoint());
+                userSession.getWebRtcEndpoint().connect(otherUserSession.getWebRtcEndpoint());
+
+                log.info(String.format("%s와 %s 간 WebRTCEp 연결", otherUserSession.getUser().getUserId(),
+                        userSession.getUser().getUserId()));
+            }
+        }
     }
 
 }
