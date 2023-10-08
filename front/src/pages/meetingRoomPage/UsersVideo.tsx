@@ -1,4 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../store/types/redux.type';
+
 import Video from '../../components/meetingRoom/video/video';
 
 import { WebRTCUser } from './rtc.type';
@@ -18,10 +21,14 @@ const pc_config = {
 
 const SOCKET_SERVER_URL = 'ws://localhost:8081/socket';
 
-const userVideo = () => {
-  const socketRef = useRef<WebSocket>(); // 서버와 통신할 소켓
+const UsersVideo = () => {
+  const dispatch = useDispatch();
+  const { socket } = useSelector((state: RootState) => state.socket);
+
+  const socketRef = useRef<WebSocket | null>(); // 서버와 통신할 소켓
   const localStreamRef = useRef<MediaStream>();
   const sendPCRef = useRef<RTCPeerConnection>(); // 자신의 MediaStream 서버에게 전송할 RTCPeerConnection
+
   // 같은 방에 참가한 다른 user들의 MediaStream을 서버에서 전송받을 RTCPeerConnetion 목록
   // receivePCs[socket id] = pc 형식 (추후 수정)
   const receivePCsRef = useRef<{ [socketId: string]: RTCPeerConnection }>({});
@@ -115,7 +122,7 @@ const userVideo = () => {
     }
   }, []);
 
-  // room에 참가하느 다른 user들의 MediaStream을 받을 RTCPeerConnection을 생성하고 서버에 offer 전송
+  // room에 참가하는 다른 user들의 MediaStream을 받을 RTCPeerConnection을 생성하고 서버에 offer 전송
   const createReceivePC = useCallback(
     (id: string) => {
       try {
@@ -230,88 +237,92 @@ const userVideo = () => {
   }, [createSenderOffer, createSenderPeerConnection]);
 
   useEffect(() => {
-    socketRef.current = new WebSocket(SOCKET_SERVER_URL);
+    console.log(socket);
+
+    socketRef.current = socket;
     getLocalStream();
 
-    socketRef.current.onmessage = function (e) {
-      let data = JSON.parse(e.data);
+    if (socketRef.current) {
+      socketRef.current.onmessage = function (e) {
+        let data = JSON.parse(e.data);
 
-      switch (data.messageType) {
-        case 'userEnter': // 해당 user의 MediaStream을 받을 RTCPeerConnection을 생성하고 서버로 offer 보냄
-          createReceivePC(data.id);
-          break;
-        case 'allUsers': // 해당 user들의 MediaStream을 받을 RTCPeerConnection을 생성하고 서버로 offer 보냄
-          data.users.forEach((user: any) => createReceivePC(user.id));
-          break;
-        case 'userExit': // 해당 userdml MediaStream을 받기 위해 연결한 RTCPeerConnetion을 닫고, 목록에서 삭제
-          closeReceivePC(data.id);
-          setUsers((users) => users.filter((user) => user.id !== data.id));
-          break;
-        case 'getSenderAnswer': // 해당 RTCPeerConnection의 remoteDescription으로 sdp를 지정
-          // TODO: 소켓을 통해 받아온 데이터명 확인해서 data 변수 바꿔주기
-          async (data: { sdp: RTCSessionDescription }) => {
-            try {
-              if (!sendPCRef.current) return;
-              console.log('get sender answer');
-              console.log(data.sdp);
-              await sendPCRef.current.setRemoteDescription(
-                new RTCSessionDescription(data.sdp)
-              );
-            } catch (error) {
-              console.log(error);
-            }
-          };
-          break;
+        switch (data.messageType) {
+          case 'userEnter': // 해당 user의 MediaStream을 받을 RTCPeerConnection을 생성하고 서버로 offer 보냄
+            createReceivePC(data.id);
+            break;
+          case 'allUsers': // 해당 user들의 MediaStream을 받을 RTCPeerConnection을 생성하고 서버로 offer 보냄
+            data.users.forEach((user: any) => createReceivePC(user.id));
+            break;
+          case 'userExit': // 해당 userdml MediaStream을 받기 위해 연결한 RTCPeerConnetion을 닫고, 목록에서 삭제
+            closeReceivePC(data.id);
+            setUsers((users) => users.filter((user) => user.id !== data.id));
+            break;
+          case 'getSenderAnswer': // 해당 RTCPeerConnection의 remoteDescription으로 sdp를 지정
+            // TODO: 소켓을 통해 받아온 데이터명 확인해서 data 변수 바꿔주기
+            async (data: { sdp: RTCSessionDescription }) => {
+              try {
+                if (!sendPCRef.current) return;
+                console.log('get sender answer');
+                console.log(data.sdp);
+                await sendPCRef.current.setRemoteDescription(
+                  new RTCSessionDescription(data.sdp)
+                );
+              } catch (error) {
+                console.log(error);
+              }
+            };
+            break;
 
-        case 'getSenderCandidate': // 해당 RTCPeerConnection에 RTCIceCandidate 추가
-          async (data: { candidate: RTCIceCandidateInit }) => {
-            try {
-              if (!(data.candidate && sendPCRef.current)) return;
-              console.log('get sender candidate');
-              await sendPCRef.current.addIceCandidate(
-                new RTCIceCandidate(data.candidate)
-              );
-              console.log('candidate add success');
-            } catch (error) {
-              console.log(error);
-            }
-          };
-          break;
+          case 'getSenderCandidate': // 해당 RTCPeerConnection에 RTCIceCandidate 추가
+            async (data: { candidate: RTCIceCandidateInit }) => {
+              try {
+                if (!(data.candidate && sendPCRef.current)) return;
+                console.log('get sender candidate');
+                await sendPCRef.current.addIceCandidate(
+                  new RTCIceCandidate(data.candidate)
+                );
+                console.log('candidate add success');
+              } catch (error) {
+                console.log(error);
+              }
+            };
+            break;
 
-        case 'getReceiverAnswer': // 해당 RTCPeerConnection의 remoteDescription으로 sdp 지정
-          async (data: { id: string; sdp: RTCSessionDescription }) => {
-            try {
-              console.log(`get socketID(${data.id}'s answer)`);
-              const pc: RTCPeerConnection = receivePCsRef.current[data.id];
-              if (!pc) return;
-              await pc.setRemoteDescription(data.sdp);
-              console.log(`socketID(${data.id})'s set remote sdp success`);
-            } catch (error) {
-              console.log(error);
-            }
-          };
-          break;
+          case 'getReceiverAnswer': // 해당 RTCPeerConnection의 remoteDescription으로 sdp 지정
+            async (data: { id: string; sdp: RTCSessionDescription }) => {
+              try {
+                console.log(`get socketID(${data.id}'s answer)`);
+                const pc: RTCPeerConnection = receivePCsRef.current[data.id];
+                if (!pc) return;
+                await pc.setRemoteDescription(data.sdp);
+                console.log(`socketID(${data.id})'s set remote sdp success`);
+              } catch (error) {
+                console.log(error);
+              }
+            };
+            break;
 
-        case 'getReceiverCandidate': // 해당 RTCPeerConnection에 RTCIceCandidate 추가
-          async (data: { id: string; candidate: RTCIceCandidateInit }) => {
-            try {
-              console.log(data);
-              console.log(`get socketID(${data.id})'s candidate`);
-              const pc: RTCPeerConnection = receivePCsRef.current[data.id];
-              if (!(pc && data.candidate)) return;
-              await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-              console.log(`socketID(${data.id})'s candidate add success`);
-            } catch (error) {
-              console.log(error);
-            }
-          };
-          break;
+          case 'getReceiverCandidate': // 해당 RTCPeerConnection에 RTCIceCandidate 추가
+            async (data: { id: string; candidate: RTCIceCandidateInit }) => {
+              try {
+                console.log(data);
+                console.log(`get socketID(${data.id})'s candidate`);
+                const pc: RTCPeerConnection = receivePCsRef.current[data.id];
+                if (!(pc && data.candidate)) return;
+                await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+                console.log(`socketID(${data.id})'s candidate add success`);
+              } catch (error) {
+                console.log(error);
+              }
+            };
+            break;
 
-        default:
-          console.log('error');
+          default:
+            console.log('error');
 
-          break;
-      }
+            break;
+        }
+      };
       return () => {
         if (socketRef.current) {
           // socketRef.current.disconnect();
@@ -322,7 +333,7 @@ const userVideo = () => {
         users.forEach((user) => closeReceivePC(user.id));
       };
       // eslint-disable-next-line
-    };
+    }
   }, [
     closeReceivePC,
     createReceivePC,
@@ -350,4 +361,4 @@ const userVideo = () => {
   );
 };
 
-export default userVideo;
+export default UsersVideo;

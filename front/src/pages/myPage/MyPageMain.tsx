@@ -45,7 +45,7 @@ function MypageMain({ handleCreateMeeting }: propsType) {
         socket.close();
 
         alert('미팅 참여에 실패하였습니다.');
-        dispatch(clearSocket({}));
+        dispatch(clearSocket());
       }
       i++;
     };
