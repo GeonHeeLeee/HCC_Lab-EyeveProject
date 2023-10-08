@@ -5,6 +5,7 @@ import { RootState } from '../../store/types/redux.type';
 import Video from '../../components/meetingRoom/video/video';
 
 import { WebRTCUser } from './rtc.type';
+import { getSocket, initSocket } from '../../services/socket';
 
 const pc_config = {
   iceServers: [
@@ -237,9 +238,10 @@ const UsersVideo = () => {
   }, [createSenderOffer, createSenderPeerConnection]);
 
   useEffect(() => {
-    console.log(socket);
+    initSocket();
+    socketRef.current = getSocket();
+    console.log(socketRef.current);
 
-    socketRef.current = socket;
     getLocalStream();
 
     if (socketRef.current) {
@@ -250,16 +252,19 @@ const UsersVideo = () => {
           case 'userEnter': // 해당 user의 MediaStream을 받을 RTCPeerConnection을 생성하고 서버로 offer 보냄
             createReceivePC(data.id);
             break;
+
           case 'allUsers': // 해당 user들의 MediaStream을 받을 RTCPeerConnection을 생성하고 서버로 offer 보냄
             data.users.forEach((user: any) => createReceivePC(user.id));
             break;
+
           case 'userExit': // 해당 userdml MediaStream을 받기 위해 연결한 RTCPeerConnetion을 닫고, 목록에서 삭제
             closeReceivePC(data.id);
             setUsers((users) => users.filter((user) => user.id !== data.id));
             break;
+
           case 'getSenderAnswer': // 해당 RTCPeerConnection의 remoteDescription으로 sdp를 지정
             // TODO: 소켓을 통해 받아온 데이터명 확인해서 data 변수 바꿔주기
-            async (data: { sdp: RTCSessionDescription }) => {
+            (async (data: { sdp: RTCSessionDescription }) => {
               try {
                 if (!sendPCRef.current) return;
                 console.log('get sender answer');
@@ -270,11 +275,11 @@ const UsersVideo = () => {
               } catch (error) {
                 console.log(error);
               }
-            };
+            })(data);
             break;
 
           case 'getSenderCandidate': // 해당 RTCPeerConnection에 RTCIceCandidate 추가
-            async (data: { candidate: RTCIceCandidateInit }) => {
+            (async (data: { candidate: RTCIceCandidateInit }) => {
               try {
                 if (!(data.candidate && sendPCRef.current)) return;
                 console.log('get sender candidate');
@@ -285,11 +290,11 @@ const UsersVideo = () => {
               } catch (error) {
                 console.log(error);
               }
-            };
+            })(data);
             break;
 
           case 'getReceiverAnswer': // 해당 RTCPeerConnection의 remoteDescription으로 sdp 지정
-            async (data: { id: string; sdp: RTCSessionDescription }) => {
+            (async (data: { id: string; sdp: RTCSessionDescription }) => {
               try {
                 console.log(`get socketID(${data.id}'s answer)`);
                 const pc: RTCPeerConnection = receivePCsRef.current[data.id];
@@ -299,11 +304,11 @@ const UsersVideo = () => {
               } catch (error) {
                 console.log(error);
               }
-            };
+            })(data);
             break;
 
           case 'getReceiverCandidate': // 해당 RTCPeerConnection에 RTCIceCandidate 추가
-            async (data: { id: string; candidate: RTCIceCandidateInit }) => {
+            (async (data: { id: string; candidate: RTCIceCandidateInit }) => {
               try {
                 console.log(data);
                 console.log(`get socketID(${data.id})'s candidate`);
@@ -314,7 +319,7 @@ const UsersVideo = () => {
               } catch (error) {
                 console.log(error);
               }
-            };
+            })(data);
             break;
 
           default:

@@ -18,6 +18,7 @@ import { sessionExpiration } from '../../store/modules/loginUsernameSlice';
 import { logout } from '../../store/modules/isLoginSlice';
 import MypageMain from './MyPageMain';
 import MyPageNav from './MyPageNav';
+import { getSocket, initSocket } from '../../services/socket';
 
 /*
     useEffect 이용해서 페이지 이동할 때 세션 관리 (별도 파일로 관리하면 좋을듯)
@@ -73,7 +74,10 @@ function MyPage() {
     // const endpoint = 'http://localhost:8081'
     // const endpoint = process.env.REACT_APP_SERVER_API!;
 
-    dispatch(setSocket(new WebSocket('ws://localhost:8081/socket')));
+    // dispatch(setSocket(new WebSocket('ws://localhost:8081/socket')));
+    initSocket();
+
+    const socket = getSocket();
 
     // const mySocket = new WebSocket('ws://localhost:8081/socket');
     // dispatch(setSocket(mySocket));
@@ -117,8 +121,6 @@ function MyPage() {
         console.log('123123');
         dispatch(clearSocket());
       };
-
-      console.log(socket);
     }
   };
 
