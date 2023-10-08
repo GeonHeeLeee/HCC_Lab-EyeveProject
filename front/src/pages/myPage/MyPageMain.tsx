@@ -2,6 +2,7 @@ import styles from '../../styles/mypage.module.css';
 import '../../styles/bootstrap.css';
 
 import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
 import VideoCallIcon from '@mui/icons-material/VideoCall';
 import KeyboardIcon from '@mui/icons-material/Keyboard';
@@ -11,48 +12,61 @@ import useInput from '../../hooks/useInput';
 import { propsType } from './mypage.type';
 
 import { clearSocket, setSocket } from '../../store/modules/socketSlice';
+import { getSocket, initSocket } from '../../services/socket';
 
 const initialForm = { meetingId: '' };
 
 function MypageMain({ handleCreateMeeting }: propsType) {
   const [form, onChange] = useInput(initialForm);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   // 참가 버튼 눌렀을 떄 socket에 입력받은 roomId와 userId 담아서 소켓 전송
   const handleEnterMeeting = (_: React.MouseEvent<HTMLButtonElement>) => {
-    const socket = new WebSocket('ws://localhost:8081/socket');
+    // const socket = new WebSocket('ws://localhost:8081/socket');
+    initSocket();
+    const socket = getSocket();
 
-    socket.onopen = function () {
-      socket.send(
-        JSON.stringify({
-          roomName: form.meetingId,
-          userId: localStorage.getItem('userName'),
-          messageType: 'JOIN',
-        })
-      );
-      console.log('socket is send');
-    };
+    if (socket) {
+      socket.onopen = function () {
+        socket.send(
+          JSON.stringify({
+            roomName: form.meetingId,
+            userId: '1',
+            messageType: 'JOIN',
+          })
+        );
+        console.log('socket is send');
+      };
 
-    socket.onmessage = function (event) {
-      console.log(event.data, event);
-      // dispatch(setSocket(event.data));
-    };
+      socket.onmessage = function (event) {
+        let msg = JSON.parse(event.data);
 
-    let i = 0;
-    socket.onerror = (error) => {
-      console.log(error);
-      if (i == 2) {
-        socket.close();
+        switch (msg.messageType) {
+          case 'JOIN':
+            console.log(msg.roomName);
 
-        alert('미팅 참여에 실패하였습니다.');
-        dispatch(clearSocket({}));
-      }
-      i++;
-    };
+            alert(msg.roomName);
+            navigate('/meeting');
+        }
+      };
 
-    socket.onclose = function (event) {
-      console.log(event);
-    };
+      let i = 0;
+      socket.onerror = (error) => {
+        console.log(error);
+        if (i == 2) {
+          socket.close();
+
+          alert('미팅 참여에 실패하였습니다.');
+          // dispatch(clearSocket());
+        }
+        i++;
+      };
+
+      socket.onclose = function (event) {
+        console.log(event);
+      };
+    }
   };
 
   return (

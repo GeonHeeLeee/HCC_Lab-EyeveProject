@@ -1,4 +1,4 @@
-import axios, {AxiosInstance, AxiosRequestConfig} from "axios";
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 
 export interface ICommunication {
   get(url: string, config?: any): Promise<any>;
@@ -42,7 +42,6 @@ export class Http implements ICommunication {
   async delete(url: string, config?: AxiosRequestConfig<any>) {
     return this.httpClient.delete(url, {
       ...config,
-    })
+    });
   }
-
 }
