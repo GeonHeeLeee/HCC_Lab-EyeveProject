@@ -94,17 +94,11 @@ public class ChatRoomService {
             findUser.setRoom(roomJoined);
             UserSession userSession = new UserSession(findUser, session, null);
             //WebRTCEndpoint 생성
-            WebRtcEndpoint webRtcEndpoint = new WebRtcEndpoint.Builder(roomJoined.getPipeline()).build();
-            userSession.setWebRtcEndpoint(webRtcEndpoint);
+            webRTCSignalingService.createWebRTCEp(roomJoined, userSession);
             roomJoined.addUserAndSession(userId, userSession);
 
             //방에 있는 사용자들과 WebRTCEndpoint 연결하기
-            for(UserSession otherUserSession : roomJoined.getUserInRoomList().values()){
-                if(otherUserSession != userSession) {
-                    otherUserSession.getWebRtcEndpoint().connect(userSession.getWebRtcEndpoint());
-                    userSession.getWebRtcEndpoint().connect(otherUserSession.getWebRtcEndpoint());
-                }
-            }
+            webRTCSignalingService.connectWebRTCEp(roomJoined, userSession);
 
             log.info("방 참가 요청 - userId : " + findUser.getUserId());
             log.info("방 참가 요청 - roomName : " + roomJoined.getRoomName());
@@ -117,6 +111,8 @@ public class ChatRoomService {
         session.sendMessage(new TextMessage("No Such Room"));
         return null;
     }
+
+
 
     /*
     메세지 전송 메서드
@@ -170,10 +166,6 @@ public class ChatRoomService {
                 //메세지 받을 때 방 이름도 같이 받아야 함 또한 userId도 받아야함
                 Rooms offeredRoom = RoomList.get(roomName);
                 UserSession offeredUserSession = offeredRoom.getUserInRoomList().get(senderId);
-
-//                //WebRTCEndpoint 생성
-//                WebRtcEndpoint webRtcEndpoint = new WebRtcEndpoint.Builder(offeredRoom.getPipeline()).build();
-//                offeredUserSession.setWebRtcEndpoint(webRtcEndpoint);
                 webRTCSignalingService.processSdpOffer(offeredUserSession, chatMessage);
                 break;
 

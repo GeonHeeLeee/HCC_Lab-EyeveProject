@@ -99,4 +99,18 @@ public class WebRTCSignalingService {
         userSession.getWebRtcEndpoint().addIceCandidate(iceCandidate);
     }
 
+    public void createWebRTCEp(Rooms roomJoined, UserSession userSession) {
+        WebRtcEndpoint webRtcEndpoint = new WebRtcEndpoint.Builder(roomJoined.getPipeline()).build();
+        userSession.setWebRtcEndpoint(webRtcEndpoint);
+    }
+
+    public void connectWebRTCEp(Rooms roomJoined, UserSession userSession) {
+        for(UserSession otherUserSession : roomJoined.getUserInRoomList().values()){
+            if(otherUserSession != userSession) {
+                otherUserSession.getWebRtcEndpoint().connect(userSession.getWebRtcEndpoint());
+                userSession.getWebRtcEndpoint().connect(otherUserSession.getWebRtcEndpoint());
+            }
+        }
+    }
+
 }
