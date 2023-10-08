@@ -156,7 +156,8 @@ public class ChatRoomService {
                 chatMessage.setMessage(senderId + "님이 입장하셨습니다.");
                 Rooms joinedRoom = joinUser(senderId, session, roomName);
                 if(joinedRoom != null){
-                    sendMessage(chatMessage.getMessage(), session, joinedRoom); }
+                    //sendMessage(chatMessage.getMessage(), session, joinedRoom);
+                }
                 break;
 
             case CHAT :

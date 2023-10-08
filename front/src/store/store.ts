@@ -1,10 +1,11 @@
-import {configureStore} from '@reduxjs/toolkit';
+import { configureStore } from '@reduxjs/toolkit';
 
 import showSignupSlice from './modules/showSignupSlice';
 import isLoginSlice from './modules/isLoginSlice';
 import loginUsernameSlice from './modules/loginUsernameSlice';
 import socketSlice from './modules/socketSlice';
-import networkSlice from "./modules/networkSlice";
+import networkSlice from './modules/networkSlice';
+import enterRoomNameSlice from './modules/enterRoomNameSlice';
 
 export const store = configureStore({
   reducer: {
@@ -13,5 +14,6 @@ export const store = configureStore({
     loginUsername: loginUsernameSlice,
     socket: socketSlice,
     network: networkSlice,
+    roomName: enterRoomNameSlice,
   },
 });

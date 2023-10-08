@@ -13,6 +13,7 @@ import { propsType } from './mypage.type';
 
 import { clearSocket, setSocket } from '../../store/modules/socketSlice';
 import { getSocket, initSocket } from '../../services/socket';
+import { enterRoom } from '../../store/modules/enterRoomNameSlice';
 
 const initialForm = { meetingId: '' };
 
@@ -45,6 +46,7 @@ function MypageMain({ handleCreateMeeting }: propsType) {
         switch (msg.messageType) {
           case 'JOIN':
             console.log(msg.roomName);
+            dispatch(enterRoom(msg.roomName));
 
             alert(msg.roomName);
             navigate('/meeting');

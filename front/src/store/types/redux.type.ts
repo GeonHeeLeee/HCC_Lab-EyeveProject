@@ -21,10 +21,15 @@ export type Network = {
   networkInterface: HttpInterface;
 };
 
+export type RoomName = {
+  roomName: string;
+};
+
 export type RootState = {
   isLogin: IsLogin;
   loginUsername: LoginUsername;
   showSignup: ShowSignup;
   socket: SocketState;
   network: Network;
+  roomName: RoomName;
 };

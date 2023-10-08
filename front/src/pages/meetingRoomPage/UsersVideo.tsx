@@ -24,7 +24,7 @@ const SOCKET_SERVER_URL = 'ws://localhost:8081/socket';
 
 const UsersVideo = () => {
   const dispatch = useDispatch();
-  const { socket } = useSelector((state: RootState) => state.socket);
+  // const { socket } = useSelector((state: RootState) => state.socket);
 
   const socketRef = useRef<WebSocket | null>(); // 서버와 통신할 소켓
   const localStreamRef = useRef<MediaStream>();
@@ -159,9 +159,10 @@ const UsersVideo = () => {
           JSON.stringify({
             // TODO: 데이터 형식 맞춰 바꾸기
             messageType: 'SDP_OFFER',
-            sdp,
+            sdpOffer: sdp,
+            userId: 'hello',
             // senderSocketID: socketRef.current.id,
-            roomID: '',
+            roomID: '2a2a73df-a5dc-47a0-b068-3b3c318fbf00',
           })
         );
       };
