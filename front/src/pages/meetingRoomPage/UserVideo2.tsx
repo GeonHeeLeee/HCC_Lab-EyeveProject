@@ -36,6 +36,8 @@ const UserVideo2 = () => {
 
   const createSenderOffer = useCallback(async () => {
     try {
+      console.log(loginUser);
+
       if (!sendPCRef.current) return;
       const sdp = await sendPCRef.current.createOffer({
         offerToReceiveAudio: false,
@@ -55,9 +57,8 @@ const UserVideo2 = () => {
         JSON.stringify({
           messageType: 'SDP_OFFER',
           roomName: loginUser.roomName,
+          userId: loginUser.userId,
           sdpOffer: sdp.sdp,
-          userId: 'hello',
-          // TODO: 로그인 단계에서 REDUX에 userId, userName, 권한 받아오기
         })
       );
     } catch (e) {}
@@ -155,7 +156,7 @@ const UserVideo2 = () => {
             break;
 
           case 'ICE_CANDIDATE':
-            (async (data: { candidate: any }) => {
+            (async (data: { candidate: RTCIceCandidateInit }) => {
               try {
                 if (!(data.candidate && sendPCRef.current)) return;
                 console.log('get sender candidate');
@@ -188,6 +189,7 @@ const UserVideo2 = () => {
       };
     }
   }, [getLocalStream, createSenderOffer]);
+  // }, []);
 
   return (
     <div>

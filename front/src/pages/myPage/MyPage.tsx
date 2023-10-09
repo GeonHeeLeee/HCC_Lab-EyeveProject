@@ -76,19 +76,16 @@ function MyPage() {
     // const endpoint = 'http://localhost:8081'
     // const endpoint = process.env.REACT_APP_SERVER_API!;
 
-    // dispatch(setSocket(new WebSocket('ws://localhost:8081/socket')));
     initSocket();
 
     const socket = getSocket();
 
-    // const mySocket = new WebSocket('ws://localhost:8081/socket');
-    // dispatch(setSocket(mySocket));
     console.log(socket);
     if (socket) {
       socket.onopen = function () {
         socket.send(
           JSON.stringify({
-            userId: 'hello',
+            userId: loginUser.userId,
             messageType: 'CREATE',
           })
         );

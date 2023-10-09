@@ -13,10 +13,19 @@ export const loginUserSlice = createSlice({
   initialState,
   reducers: {
     setLoginUser: (state, action) => {
-      state.userId = action.payload.userId;
-      state.userName = action.payload.userName;
-      state.userType = action.payload.userType;
-      state.roomName = action.payload.roomName;
+      // state = {
+      //   userId: action.payload.userId,
+      //   userName: action.payload.userName,
+      //   userType: action.payload.userType,
+      //   roomName: '',
+      // };
+
+      // state.userId = action.payload.userId;
+      // state.userName = action.payload.userName;
+      // state.userType = action.payload.userType;
+      // state.roomName = action.payload.roomName;
+
+      return action.payload;
     },
     sessionExpiration: (state) => {
       state = { userId: '', userName: '', userType: undefined, roomName: '' };
