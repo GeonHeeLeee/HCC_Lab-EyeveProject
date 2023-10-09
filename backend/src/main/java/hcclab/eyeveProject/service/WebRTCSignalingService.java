@@ -34,7 +34,7 @@ public class WebRTCSignalingService {
      */
     public void processSdpOffer(UserSession userSession, ChatMessage message) throws IOException {
         WebRtcEndpoint webRtcEndpoint = userSession.getWebRtcEndpoint();
-
+        log.info("processSdpOffer webSession : " + userSession.getWebSocketSession());
         /*
         addIceCandidateListener
         - 새로운 참가자가 방에 참여하면서 ICE 후보자 정보를 KMS에 전송
@@ -46,6 +46,8 @@ public class WebRTCSignalingService {
                 String jsonMessage = makeIceCandidateMessage(iceCandidate);
                 synchronized(userSession.getWebSocketSession()) {
                     userSession.getWebSocketSession().sendMessage(new TextMessage(jsonMessage));
+                    log.info("sendIceMessage(processSDP)");
+                    log.info("webSession : " + userSession.getWebSocketSession());
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -53,12 +55,14 @@ public class WebRTCSignalingService {
         });
         String sdpOffer = message.getSdpOffer();
         String sender = message.getUserId();
-
-        webRtcEndpoint.gatherCandidates(); //ice 후보자 수집 - 이 부분이 잘 이해가 가지 않음
-
         //sdp answer 생성 후 다시 클라이언트에게 보내기
         String sdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
         String jsonSdpAnswer = makeSdpAnswerMessage(sdpAnswer, sender);
+        webRtcEndpoint.gatherCandidates(); //ice 후보자 수집 - 이 부분이 잘 이해가 가지 않음
+
+
+
+        log.info("sending SDP_ANSWER");
         userSession.getWebSocketSession().sendMessage(new TextMessage(jsonSdpAnswer));
     }
 
@@ -83,10 +87,12 @@ public class WebRTCSignalingService {
     private String makeIceCandidateMessage(IceCandidate iceCandidate) throws JsonProcessingException {
         Map<String, Object> json = new HashMap<>();
         json.put("messageType", "ICE_CANDIDATE");
-        json.put("candidate", iceCandidate.getCandidate());
-        json.put("sdpMid", iceCandidate.getSdpMid());
-        json.put("sdpMLineIndex", iceCandidate.getSdpMLineIndex());
-
+        IceCandidatePayload iceCandidatePayload =
+                new IceCandidatePayload(iceCandidate.getCandidate(), iceCandidate.getSdpMid(), iceCandidate.getSdpMLineIndex());
+//        json.put("candidate", iceCandidate.getCandidate());
+//        json.put("sdpMid", iceCandidate.getSdpMid());
+//        json.put("sdpMLineIndex", iceCandidate.getSdpMLineIndex());
+        json.put("candidate", iceCandidatePayload);
         return objectMapper.writeValueAsString(json);
     }
 

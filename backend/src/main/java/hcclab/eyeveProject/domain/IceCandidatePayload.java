@@ -10,4 +10,9 @@ public class IceCandidatePayload {
     private String sdpMid;
     private int sdpMLineIndex;
 
+    public IceCandidatePayload(String candidate, String sdpMid, int sdpMLineIndex) {
+        this.candidate = candidate;
+        this.sdpMid = sdpMid;
+        this.sdpMLineIndex = sdpMLineIndex;
+    }
 }
