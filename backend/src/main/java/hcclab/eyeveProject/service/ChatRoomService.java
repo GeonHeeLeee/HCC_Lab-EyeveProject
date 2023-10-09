@@ -148,6 +148,7 @@ public class ChatRoomService {
         switch(chatMessage.getMessageType()){
             case CREATE:
                 String createdRoomName = createRoom(senderId, session);
+                log.info("webSocketSession : " + session);
                 sendMessageType(session, "CREATE", createdRoomName);
                 break;
 
@@ -155,6 +156,7 @@ public class ChatRoomService {
                 Rooms joinedRoom = joinUser(senderId, session, roomName);
                 sendMessageType(session, "JOIN", roomName);
                 chatMessage.setMessage(senderId + "님이 입장하셨습니다.");
+                log.info("webSocketSession : " + session);
                 if(joinedRoom != null){
                     //sendMessage(chatMessage.getMessage(), session, joinedRoom);
                 }
@@ -168,12 +170,14 @@ public class ChatRoomService {
 
             case SDP_OFFER:
                 //메세지 받을 때 방 이름도 같이 받아야 함 또한 userId도 받아야함
+                log.info("MessageType : SDP_OFFER");
                 Rooms offeredRoom = RoomList.get(roomName);
                 UserSession offeredUserSession = offeredRoom.getUserInRoomList().get(senderId);
                 webRTCSignalingService.processSdpOffer(offeredUserSession, chatMessage);
                 break;
 
             case ICE_CANDIDATE:
+                log.info("MessageType : ICE_CANDIDATE");
                 Rooms iceRoom = RoomList.get(roomName);
                 UserSession iceUserSession = iceRoom.getUserInRoomList().get(senderId);
                 webRTCSignalingService.processIceCandidate(iceUserSession, chatMessage);
