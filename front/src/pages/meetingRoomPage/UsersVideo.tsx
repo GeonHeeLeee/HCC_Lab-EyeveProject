@@ -184,7 +184,7 @@ const UsersVideo = () => {
       socketRef.current.onopen = function () {
         socketRef.current?.send(
           JSON.stringify({
-            candidate: e.candidate,
+            IceCandidate: e.candidate,
             // senderSocketID: socketRef.current.id,
           })
         );

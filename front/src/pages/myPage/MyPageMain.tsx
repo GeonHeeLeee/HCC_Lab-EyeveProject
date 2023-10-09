@@ -13,7 +13,7 @@ import { propsType } from './mypage.type';
 
 import { clearSocket, setSocket } from '../../store/modules/socketSlice';
 import { getSocket, initSocket } from '../../services/socket';
-import { enterRoom } from '../../store/modules/enterRoomNameSlice';
+import { enterRoom } from '../../store/modules/loginUserSlice';
 
 const initialForm = { meetingId: '' };
 

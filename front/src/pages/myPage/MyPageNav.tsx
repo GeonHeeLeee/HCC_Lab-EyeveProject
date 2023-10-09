@@ -2,7 +2,7 @@ import styles from '../../styles/mypage.module.css';
 
 import { propsType } from './mypage.type';
 
-import { sessionExpiration } from '../../store/modules/loginUsernameSlice';
+import { sessionExpiration } from '../../store/modules/loginUserSlice';
 import { logout } from '../../store/modules/isLoginSlice';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';

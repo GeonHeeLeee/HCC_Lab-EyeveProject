@@ -23,7 +23,8 @@ const pc_config = {
 
 const UserVideo2 = () => {
   const dispatch = useDispatch();
-  const roomName = useSelector((state: RootState) => state.roomName.roomName);
+
+  const loginUser = useSelector((state: RootState) => state.loginUser);
 
   const socketRef = useRef<WebSocket | null>(); // 서버와 통신할 소켓
   const localStreamRef = useRef<MediaStream>();
@@ -53,7 +54,7 @@ const UserVideo2 = () => {
       socketRef.current?.send(
         JSON.stringify({
           messageType: 'SDP_OFFER',
-          roomName: roomName,
+          roomName: loginUser.roomName,
           sdpOffer: sdp.sdp,
           userId: 'hello',
           // TODO: 로그인 단계에서 REDUX에 userId, userName, 권한 받아오기
@@ -71,8 +72,10 @@ const UserVideo2 = () => {
       socketRef.current.onopen = function () {
         socketRef.current?.send(
           JSON.stringify({
-            IceCandidate: e.candidate,
-            userID: 'userID', // TODO: userID 로그인 단계에서 받아오는 로직 새로 작성
+            messageType: 'ICE_CANDIDATE',
+            iceCandidate: e.candidate,
+            userID: loginUser.userId, // TODO: userID 로그인 단계에서 받아오는 로직 새로 작성
+            roomName: loginUser.roomName,
           })
         );
       };
@@ -152,7 +155,7 @@ const UserVideo2 = () => {
             break;
 
           case 'ICE_CANDIDATE':
-            (async (data: { candidate: RTCIceCandidateInit }) => {
+            (async (data: { candidate: any }) => {
               try {
                 if (!(data.candidate && sendPCRef.current)) return;
                 console.log('get sender candidate');
