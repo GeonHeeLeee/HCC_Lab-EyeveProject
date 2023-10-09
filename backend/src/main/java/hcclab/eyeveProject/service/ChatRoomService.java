@@ -171,7 +171,9 @@ public class ChatRoomService {
             case SDP_OFFER:
                 //메세지 받을 때 방 이름도 같이 받아야 함 또한 userId도 받아야함
                 log.info("MessageType : SDP_OFFER");
+                log.info("sdpOffer session : " + session);
                 Rooms offeredRoom = RoomList.get(roomName);
+                log.info("senderId : " + senderId);
                 UserSession offeredUserSession = offeredRoom.getUserInRoomList().get(senderId);
                 webRTCSignalingService.processSdpOffer(offeredUserSession, chatMessage);
                 break;

@@ -35,11 +35,22 @@ public class WebRTCSignalingService {
     public void processSdpOffer(UserSession userSession, ChatMessage message) throws IOException {
         WebRtcEndpoint webRtcEndpoint = userSession.getWebRtcEndpoint();
         log.info("processSdpOffer webSession : " + userSession.getWebSocketSession());
+        log.info("processSdpOffer rtcSession : " + webRtcEndpoint);
         /*
         addIceCandidateListener
         - 새로운 참가자가 방에 참여하면서 ICE 후보자 정보를 KMS에 전송
         - Ice 후보자가 발견 되었을 때, 참가자에게 전송
          */
+
+        String sdpOffer = message.getSdpOffer();
+        String sender = message.getUserId();
+        //sdp answer 생성 후 다시 클라이언트에게 보내기
+        log.info("processOffer 전");
+        String sdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
+        log.info("processOffer 후");
+        String jsonSdpAnswer = makeSdpAnswerMessage(sdpAnswer, sender);
+        webRtcEndpoint.gatherCandidates(); //ice 후보자 수집 - 이 부분이 잘 이해가 가지 않음
+
         webRtcEndpoint.addIceCandidateFoundListener(event -> {
             try {
                 IceCandidate iceCandidate = event.getCandidate();
@@ -53,14 +64,6 @@ public class WebRTCSignalingService {
                 throw new RuntimeException(e);
             }
         });
-        String sdpOffer = message.getSdpOffer();
-        String sender = message.getUserId();
-        //sdp answer 생성 후 다시 클라이언트에게 보내기
-        String sdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
-        String jsonSdpAnswer = makeSdpAnswerMessage(sdpAnswer, sender);
-        webRtcEndpoint.gatherCandidates(); //ice 후보자 수집 - 이 부분이 잘 이해가 가지 않음
-
-
 
         log.info("sending SDP_ANSWER");
         userSession.getWebSocketSession().sendMessage(new TextMessage(jsonSdpAnswer));
@@ -116,7 +119,7 @@ public class WebRTCSignalingService {
     public void createWebRTCEp(Rooms roomJoined, UserSession userSession) {
         WebRtcEndpoint webRtcEndpoint = new WebRtcEndpoint.Builder(roomJoined.getPipeline()).build();
         userSession.setWebRtcEndpoint(webRtcEndpoint);
-
+        log.info("createRTCEP - set : " + webRtcEndpoint);
         log.info(String.format("%s의 webRTCEp 생성", userSession.getUser().getUserId()));
     }
 

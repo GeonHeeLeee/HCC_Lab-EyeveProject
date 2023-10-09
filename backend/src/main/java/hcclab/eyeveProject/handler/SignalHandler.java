@@ -27,7 +27,6 @@ public class SignalHandler extends TextWebSocketHandler {
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();
-        log.info("Message : " + payload);
 
         ChatMessage chatMessage = objectMapper.readValue(payload, ChatMessage.class);
         chatRoomService.handlerActions(session, chatMessage);
