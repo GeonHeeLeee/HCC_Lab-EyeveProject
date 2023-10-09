@@ -14,6 +14,8 @@ import { propsType } from './mypage.type';
 import { clearSocket, setSocket } from '../../store/modules/socketSlice';
 import { getSocket, initSocket } from '../../services/socket';
 import { enterRoom } from '../../store/modules/loginUserSlice';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store/types/redux.type';
 
 const initialForm = { meetingId: '' };
 
@@ -21,6 +23,8 @@ function MypageMain({ handleCreateMeeting }: propsType) {
   const [form, onChange] = useInput(initialForm);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const loginUser = useSelector((state: RootState) => state.loginUser);
 
   // 참가 버튼 눌렀을 떄 socket에 입력받은 roomId와 userId 담아서 소켓 전송
   const handleEnterMeeting = (_: React.MouseEvent<HTMLButtonElement>) => {
@@ -33,7 +37,7 @@ function MypageMain({ handleCreateMeeting }: propsType) {
         socket.send(
           JSON.stringify({
             roomName: form.meetingId,
-            userId: '1',
+            userId: loginUser.userId,
             messageType: 'JOIN',
           })
         );
