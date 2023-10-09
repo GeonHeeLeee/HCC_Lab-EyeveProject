@@ -14,12 +14,11 @@ import {
 import useInput from '../../hooks/useInput';
 import { RootState } from '../../store/types/redux.type';
 
-import { sessionExpiration } from '../../store/modules/loginUsernameSlice';
-import { logout } from '../../store/modules/isLoginSlice';
+import { sessionExpiration } from '../../store/modules/loginUserSlice';
+import { enterRoom } from '../../store/modules/loginUserSlice';
 import MypageMain from './MyPageMain';
 import MyPageNav from './MyPageNav';
 import { getSocket, initSocket } from '../../services/socket';
-import { enterRoom } from '../../store/modules/enterRoomNameSlice';
 
 /*
     useEffect 이용해서 페이지 이동할 때 세션 관리 (별도 파일로 관리하면 좋을듯)
@@ -31,6 +30,8 @@ function MyPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [render, setRender] = useState(false);
+
+  const loginUser = useSelector((state: RootState) => state.loginUser);
 
   const { networkInterface } = useSelector((state: RootState) => {
     return state.network;

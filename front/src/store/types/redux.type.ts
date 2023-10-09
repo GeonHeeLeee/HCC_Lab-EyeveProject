@@ -3,8 +3,11 @@ import { HttpInterface } from '../../api/http/httpInterface';
 export type IsLogin = {
   value: boolean;
 };
-export type LoginUsername = {
-  username: string;
+export type LoginUser = {
+  userId: string;
+  userName: string;
+  userType: 'PROFESSOR' | 'STUDENT' | undefined;
+  roomName: string | null;
 };
 
 export type ShowSignup = {
@@ -21,15 +24,10 @@ export type Network = {
   networkInterface: HttpInterface;
 };
 
-export type RoomName = {
-  roomName: string;
-};
-
 export type RootState = {
   isLogin: IsLogin;
-  loginUsername: LoginUsername;
+  loginUser: LoginUser;
   showSignup: ShowSignup;
   socket: SocketState;
   network: Network;
-  roomName: RoomName;
 };
