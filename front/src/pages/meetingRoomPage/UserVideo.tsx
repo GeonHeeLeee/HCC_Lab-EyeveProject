@@ -7,6 +7,7 @@ import { getSocket, initSocket } from '../../services/socket';
 import { useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/types/redux.type';
+import { error, log } from 'console';
 
 const pc_config = {
   iceServers: [
@@ -61,7 +62,9 @@ const UserVideo2 = () => {
           sdpOffer: sdp.sdp,
         })
       );
-    } catch (e) {}
+    } catch (e) {
+      console.log(e);
+    }
   }, []);
 
   const createSenderPeerConnection = useCallback(() => {
@@ -70,20 +73,30 @@ const UserVideo2 = () => {
     pc.onicecandidate = (e) => {
       if (!(e.candidate && socketRef.current)) return;
       console.log('sender PC onicecandidate');
-      socketRef.current.onopen = function () {
-        socketRef.current?.send(
+      // console.log(e.candidate.candidate);
+      if (socketRef.current.readyState === WebSocket.OPEN) {
+        socketRef.current.send(
           JSON.stringify({
             messageType: 'ICE_CANDIDATE',
             iceCandidate: e.candidate,
-            userID: loginUser.userId, // TODO: userID 로그인 단계에서 받아오는 로직 새로 작성
+            userId: loginUser.userId,
             roomName: loginUser.roomName,
           })
         );
-      };
+      }
     };
 
     pc.oniceconnectionstatechange = (e) => {
       console.log(e);
+    };
+
+    pc.ontrack = (e) => {
+      console.log('sender PC ontrack');
+
+      const stream = e.streams[0];
+      console.log(stream);
+
+      setUsers((prevUsers) => [...prevUsers, { id: e.track.id, stream }]);
     };
 
     if (localStreamRef.current) {
@@ -140,8 +153,8 @@ const UserVideo2 = () => {
               try {
                 if (!sendPCRef.current) return;
                 console.log('get sender answer');
-                console.log(data);
-                console.log(data.SDP_ANSWER);
+                // console.log(data);
+                // console.log(data.SDP_ANSWER);
 
                 await sendPCRef.current.setRemoteDescription(
                   new RTCSessionDescription({
@@ -149,6 +162,7 @@ const UserVideo2 = () => {
                     sdp: data.SDP_ANSWER,
                   })
                 );
+                console.log('sender set remote description success');
               } catch (error) {
                 console.log(error);
               }
@@ -204,6 +218,16 @@ const UserVideo2 = () => {
         ref={localVideoRef}
         autoPlay
       />
+      {/* <video style={{
+        width:240,
+        height:240,
+        margin:5,
+        backgroundColor:'black'
+      }}
+      muted
+      ref={users}>
+
+      </video> */}
       {users.map((user, index) => (
         <Video key={index} stream={user.stream} />
       ))}
