@@ -29,11 +29,7 @@ const Video = ({ stream, muted }: Props) => {
     if (muted) setIsMuted(muted);
   }, [stream, muted]);
 
-  return (
-    <Container>
-      <VideoContainer ref={ref} muted={isMuted} autoPlay />
-    </Container>
-  );
+  return <VideoContainer ref={ref} muted={isMuted} autoPlay />;
 };
 
 export default Video;
