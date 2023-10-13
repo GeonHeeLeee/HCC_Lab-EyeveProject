@@ -92,10 +92,8 @@ public class WebRTCSignalingService {
         json.put("messageType", "ICE_CANDIDATE");
         IceCandidatePayload iceCandidatePayload =
                 new IceCandidatePayload(iceCandidate.getCandidate(), iceCandidate.getSdpMid(), iceCandidate.getSdpMLineIndex());
-//        json.put("candidate", iceCandidate.getCandidate());
-//        json.put("sdpMid", iceCandidate.getSdpMid());
-//        json.put("sdpMLineIndex", iceCandidate.getSdpMLineIndex());
         json.put("candidate", iceCandidatePayload);
+        log.info("makeIceCandidateMessage 실행");
         return objectMapper.writeValueAsString(json);
     }
 
@@ -108,7 +106,7 @@ public class WebRTCSignalingService {
         IceCandidatePayload payload = message.getIceCandidate();
         IceCandidate iceCandidate =
                 new IceCandidate(payload.getCandidate(), payload.getSdpMid(), payload.getSdpMLineIndex());
-
+        log.info("processIceCandidate 함수 호출");
         userSession.getWebRtcEndpoint().addIceCandidate(iceCandidate);
     }
 
