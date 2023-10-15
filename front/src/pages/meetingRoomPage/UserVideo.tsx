@@ -33,6 +33,7 @@ const UserVideo2 = () => {
   const sendPCRef = useRef<RTCPeerConnection>();
 
   const localVideoRef = useRef<HTMLVideoElement>(null); // 자신의 MediaStream 출력할 video 태그의 ref
+  const remoteVideoRef = useRef<HTMLVideoElement>(null); // 상대방의 MediaStream 출력할 video 태그의 ref
   const [users, setUsers] = useState<Array<WebRTCUser>>([]);
 
   const createSenderOffer = useCallback(async () => {
@@ -41,8 +42,8 @@ const UserVideo2 = () => {
 
       if (!sendPCRef.current) return;
       const sdp = await sendPCRef.current.createOffer({
-        offerToReceiveAudio: false,
-        offerToReceiveVideo: false,
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: true,
       });
 
       console.log('create sender offer success');
@@ -96,7 +97,10 @@ const UserVideo2 = () => {
       const stream = e.streams[0];
       console.log(stream);
 
-      setUsers((prevUsers) => [...prevUsers, { id: e.track.id, stream }]);
+      if (remoteVideoRef.current) remoteVideoRef.current.srcObject = stream;
+      if (!socketRef.current) return;
+
+      // setUsers((prevUsers) => [...prevUsers, { id: e.track.id, stream }]);
     };
 
     if (localStreamRef.current) {
@@ -104,6 +108,7 @@ const UserVideo2 = () => {
       localStreamRef.current.getTracks().forEach((track) => {
         if (!localStreamRef.current) return;
         pc.addTrack(track, localStreamRef.current);
+        console.log('add local stream success');
       });
     } else {
       console.log('no local stream');
@@ -184,8 +189,39 @@ const UserVideo2 = () => {
             })(data);
             break;
 
-          case '':
-            break;
+          // case 'SDP_OFFER':
+          //   (async (data: {
+          //     messageType: string;
+          //     SDP_OFFER: string;
+          //     userId: string;
+          //   }) => {
+          //     try {
+          //       if (!sendPCRef.current) return;
+          //       console.log('get sender offer');
+
+          //       await sendPCRef.current.setRemoteDescription(
+          //         new RTCSessionDescription({
+          //           type: 'offer',
+          //           sdp: data.SDP_OFFER,
+          //         })
+          //       );
+          //       const sdpAnswer = await sendPCRef.current.createAnswer();
+
+          //       await sendPCRef.current.setLocalDescription(sdpAnswer);
+
+          //       socketRef.current?.send(
+          //         JSON.stringify({
+          //           messageType: 'SDP_ANSWER',
+          //           roomName: loginUser.roomName,
+          //           userId: loginUser.userId,
+          //           sdpAnswer: sdpAnswer.sdp,
+          //         })
+          //       );
+          //     } catch (error) {
+          //       console.log(error);
+          //     }
+          //   })(data);
+          //   break;
 
           case '':
             break;
@@ -218,16 +254,18 @@ const UserVideo2 = () => {
         ref={localVideoRef}
         autoPlay
       />
-      {/* <video style={{
-        width:240,
-        height:240,
-        margin:5,
-        backgroundColor:'black'
-      }}
-      muted
-      ref={users}>
+      <video
+        style={{
+          width: 240,
+          height: 240,
+          margin: 5,
+          backgroundColor: 'black',
+        }}
+        muted
+        ref={remoteVideoRef}
+        autoPlay
+      />
 
-      </video> */}
       {users.map((user, index) => (
         <Video key={index} stream={user.stream} />
       ))}
