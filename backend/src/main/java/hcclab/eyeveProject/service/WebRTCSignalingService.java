@@ -36,11 +36,6 @@ public class WebRTCSignalingService {
         WebRtcEndpoint webRtcEndpoint = userSession.getWebRtcEndpoint();
         log.info("processSdpOffer webSession : " + userSession.getWebSocketSession());
         log.info("processSdpOffer rtcSession : " + webRtcEndpoint);
-        /*
-        addIceCandidateListener
-        - 새로운 참가자가 방에 참여하면서 ICE 후보자 정보를 KMS에 전송
-        - Ice 후보자가 발견 되었을 때, 참가자에게 전송
-         */
 
         String sdpOffer = message.getSdpOffer();
         String sender = message.getUserId();
@@ -51,19 +46,6 @@ public class WebRTCSignalingService {
         String jsonSdpAnswer = makeSdpAnswerMessage(sdpAnswer, sender);
         webRtcEndpoint.gatherCandidates(); //ice 후보자 수집 - 이 부분이 잘 이해가 가지 않음
 
-        webRtcEndpoint.addIceCandidateFoundListener(event -> {
-            try {
-                IceCandidate iceCandidate = event.getCandidate();
-                String jsonMessage = makeIceCandidateMessage(iceCandidate);
-                synchronized(userSession.getWebSocketSession()) {
-                    userSession.getWebSocketSession().sendMessage(new TextMessage(jsonMessage));
-                    log.info("sendIceMessage(processSDP)");
-                    log.info("webSession : " + userSession.getWebSocketSession());
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
 
         log.info("sending SDP_ANSWER");
         userSession.getWebSocketSession().sendMessage(new TextMessage(jsonSdpAnswer));
@@ -116,6 +98,27 @@ public class WebRTCSignalingService {
      */
     public void createWebRTCEp(Rooms roomJoined, UserSession userSession) {
         WebRtcEndpoint webRtcEndpoint = new WebRtcEndpoint.Builder(roomJoined.getPipeline()).build();
+
+        /*
+        addIceCandidateListener
+        - 새로운 참가자가 방에 참여하면서 ICE 후보자 정보를 KMS에 전송
+        - Ice 후보자가 발견 되었을 때, 참가자에게 전송
+         */
+
+        webRtcEndpoint.addIceCandidateFoundListener(event -> {
+            try {
+                IceCandidate iceCandidate = event.getCandidate();
+                String jsonMessage = makeIceCandidateMessage(iceCandidate);
+                synchronized(userSession.getWebSocketSession()) {
+                    userSession.getWebSocketSession().sendMessage(new TextMessage(jsonMessage));
+                    log.info("sendIceMessage(processSDP)");
+                    log.info("webSession : " + userSession.getWebSocketSession());
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
         userSession.setWebRtcEndpoint(webRtcEndpoint);
         log.info("createRTCEP - set : " + webRtcEndpoint);
         log.info(String.format("%s의 webRTCEp 생성", userSession.getUser().getUserId()));
