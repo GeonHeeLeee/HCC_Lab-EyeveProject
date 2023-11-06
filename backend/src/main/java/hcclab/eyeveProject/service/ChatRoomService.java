@@ -1,5 +1,6 @@
 package hcclab.eyeveProject.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hcclab.eyeveProject.domain.ChatMessage;
 import hcclab.eyeveProject.domain.ChatRoomMap;
@@ -15,6 +16,7 @@ import org.kurento.client.WebRtcEndpoint;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 import java.io.IOException;
 import java.util.HashMap;
@@ -158,7 +160,13 @@ public class ChatRoomService {
                 chatMessage.setMessage(senderId + "님이 입장하셨습니다.");
                 log.info("webSocketSession : " + session);
                 if(joinedRoom != null){
-                    //sendMessage(chatMessage.getMessage(), session, joinedRoom);
+                    //새로 들어온 사람에게 메세지 보내기
+                    String userInRoomMessage = makeUserInRoomMessage(joinedRoom);
+                    session.sendMessage(new TextMessage(userInRoomMessage));
+
+                    //방에 있는 기존 사람들에게 새로 들어온 사람의 id 보내기
+                    String userEnterMessage = makeUserEnterMessage(senderId);
+                    sendMessage(userEnterMessage, session, joinedRoom);
                 }
                 break;
 
@@ -219,6 +227,30 @@ public class ChatRoomService {
                     }
                     return false;
                 }));
+    }
+
+    /*
+    새로 들어온 사람에게 방에 있는 유저들의 id를 반환하는 메세지를 생성하는 메서드
+    - messageType : USERS_IN_ROOM
+    - 해당 방에 있는 사람들의 id 반환
+     */
+    public String makeUserInRoomMessage(Rooms room) throws JsonProcessingException {
+        Map<String, Object> json = new HashMap<>();
+        json.put("messageType","USERS_IN_ROOM");
+        json.put("users",room.getUserInRoomList().keySet());
+        return objectMapper.writeValueAsString(json);
+    }
+
+
+    /*
+    방에 있는 기존 사람들에게 새로 들어온 사람의 Id 반환하는 메세지 생성
+    - messageType : USER_ENTER
+     */
+    public String makeUserEnterMessage(String enteredUserId) throws JsonProcessingException {
+        Map<String, Object> json = new HashMap<>();
+        json.put("messageType","USER_ENTER");
+        json.put("userId",enteredUserId);
+        return objectMapper.writeValueAsString(json);
     }
 
 
