@@ -77,15 +77,11 @@ const UserVideo = () => {
 
         receivePCsRef.current = { ...receivePCsRef.current, [userId]: pc };
 
-        console.log(receivePCsRef.current);
-
         pc.onicecandidate = (e) => {
           if (!(e.candidate && socketRef.current)) return;
           console.log('receiver PC onicecandidate');
           // console.log(e.candidate.candidate);
           if (socketRef.current.readyState === WebSocket.OPEN) {
-            console.log(loginUser.userId, userId);
-
             socketRef.current.send(
               JSON.stringify({
                 messageType: 'ICE_CANDIDATE',
@@ -104,6 +100,7 @@ const UserVideo = () => {
 
         pc.ontrack = (e) => {
           console.log('ontrack success');
+          console.log(e);
           setUsers((oldUsers) =>
             oldUsers
               .filter((user) => user.userId !== userId)
@@ -310,11 +307,11 @@ const UserVideo = () => {
           case 'USERS_IN_ROOM':
             console.log('get all users');
 
-            ((data: { users: Array<{ userId: string }> }) => {
+            ((data: { users: Array<string> }) => {
               data.users.forEach((user) => {
                 console.log(user);
 
-                createReceivePC(user.userId);
+                createReceivePC(user);
               });
             })(data);
             break;
@@ -324,16 +321,16 @@ const UserVideo = () => {
             break;
 
           case 'RECEIVER_SDP_ANSWER':
-            (async (data: {
-              receiverId: string;
-              SDP_ANSWER: RTCSessionDescription;
-            }) => {
+            (async (data: { receiverId: string; SDP_ANSWER: string }) => {
               try {
                 console.log(`get user(${data.receiverId}) answer`);
                 const pc: RTCPeerConnection =
                   receivePCsRef.current[data.receiverId];
                 if (!pc) return;
-                await pc.setRemoteDescription(data.SDP_ANSWER); // TODO: 서버에서 보내주는 sdp 이름이 맞는 지 확인
+                await pc.setRemoteDescription({
+                  type: 'answer',
+                  sdp: data.SDP_ANSWER,
+                }); // TODO: 서버에서 보내주는 sdp 이름이 맞는 지 확인
                 console.log(`userId ${data.receiverId} set remote sdp success`);
               } catch (error) {
                 console.log(error);
