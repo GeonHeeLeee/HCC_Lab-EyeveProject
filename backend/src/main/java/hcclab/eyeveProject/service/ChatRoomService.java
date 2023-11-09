@@ -148,7 +148,7 @@ public class ChatRoomService {
     - messageType에 따라 각 다른 동작 수행
      */
     @Transactional
-    public void handlerActions(WebSocketSession session, ChatMessage chatMessage) throws IOException {
+    public synchronized void handlerActions(WebSocketSession session, ChatMessage chatMessage) throws IOException {
         String roomName = chatMessage.getRoomName();
         String senderId = chatMessage.getUserId();
         String receiverId = chatMessage.getReceiverId();
@@ -184,9 +184,11 @@ public class ChatRoomService {
                     joinedRoom.getUserInRoomList().values().stream()
                             .forEach(userSession -> {
                                 if (userSession.getUser().getUserId() != senderId) {
-                                    webRTCSignalingService.createDownStreamEndpoint(joinedRoom, userSession, chatMessage,senderId);
-                                    webRTCSignalingService.createDownStreamEndpoint(joinedRoom,senderSession,chatMessage, userSession.getUser().getUserId());
-                                    //userSession.getDownStreams().put(senderId, new WebRtcEndpoint.Builder(joinedRoom.getPipeline()).build());
+                                    //기존 방에 있던 사람들이 새로운 사람의 endpoint 생성 후 연결
+                                    webRTCSignalingService.createDownStreamEndpoint(joinedRoom, userSession, chatMessage,senderSession);
+                                    //새로 들어온 사람이 기존 사람들의 endpoint 생성 후 연결
+                                    webRTCSignalingService.createDownStreamEndpoint(joinedRoom,senderSession,chatMessage, userSession);
+
                                     log.info("{}의 {}에 대한 downStream 생성",userSession.getUser().getUserId(),senderId);
                                     log.info("{}의 {}에 대한 downStream 생성",senderId,userSession.getUser().getUserId());
                                 }
@@ -233,7 +235,7 @@ public class ChatRoomService {
                 log.info("RECEIVER_SDP_OFFER : receiverId - {}",receiverId);
 
                 WebRtcEndpoint receiverEndpoint = senderUserSession.getDownStreams().get(receiverId);
-                log.info(senderUserSession.getDownStreams().keySet().toString());
+                log.info("RECEIVER_SDP_OFFER : sender DownStream - {}",senderUserSession.getDownStreams().keySet().toString());
                 log.info("RECEIVER_SDP_OFFER : receiverEp - {}",receiverEndpoint);
                 webRTCSignalingService.processReceiverSdpOffer(senderUserSession,receiverEndpoint, chatMessage);
 
@@ -305,6 +307,7 @@ public class ChatRoomService {
         Map<String, Object> json = new HashMap<>();
         json.put("messageType","USERS_IN_ROOM");
         json.put("users",room.getUserInRoomList().keySet());
+        log.info("USERS_IN_ROOM {}",room.getUserInRoomList().keySet());
         return objectMapper.writeValueAsString(json);
     }
 

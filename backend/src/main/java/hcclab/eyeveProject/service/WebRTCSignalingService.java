@@ -161,17 +161,18 @@ public class WebRTCSignalingService {
 //        }
 //    }
 
-    public void createDownStreamEndpoint(Rooms roomJoined, UserSession userSession, ChatMessage chatMessage, String receiverId) {
+    public void createDownStreamEndpoint(Rooms roomJoined, UserSession userSession, ChatMessage chatMessage, UserSession receiverSession) {
         WebRtcEndpoint downStreamEndpoint = new WebRtcEndpoint.Builder(roomJoined.getPipeline()).build();
+        String receiverId = receiverSession.getUser().getUserId();
         log.info("createDownStreamEndpoint 실행");
         log.info("생성된 Endpoint : {}",downStreamEndpoint);
         addIceEventListener(downStreamEndpoint, userSession, chatMessage);
         //downStream에 추가
         log.info("createDownStreamEp - receiverId : {}",receiverId);
         userSession.getDownStreams().put(receiverId, downStreamEndpoint);
-        log.info("createDownStreamEP - downstream : {}",userSession.getDownStreams().keySet().toString());
+        log.info("createDownStreamEP - downstream : {}",userSession.getDownStreams().keySet());
         //receiver와 sender endpoint 연결
-        userSession.getWebRtcEndpoint().connect(downStreamEndpoint);
+        receiverSession.getWebRtcEndpoint().connect(downStreamEndpoint);
     }
 
 
