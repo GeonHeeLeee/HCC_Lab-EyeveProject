@@ -43,14 +43,16 @@ public class ChatRoomService {
     - 반환 값으로 roomName(roomUUID를 반환)
      */
     @Transactional
-    public String createRoom(String userId, WebSocketSession session) {
+    public String createRoom(ChatMessage chatMessage, WebSocketSession session) {
+        String userId = chatMessage.getUserId();
+
         User findUser = userRepository.findById(userId);
         Rooms createdRoom = new Rooms(findUser);
         UserSession userSession = new UserSession(findUser, session, null);
 
         //방마다 MediaPipeline 생성
         createdRoom.setMediaPipeline(kurentoClient.createMediaPipeline());
-        webRTCSignalingService.createWebRTCEp(createdRoom,userSession);
+        webRTCSignalingService.createWebRTCEp(createdRoom,userSession, chatMessage);
 
 
         roomRepository.save(createdRoom);
@@ -89,7 +91,10 @@ public class ChatRoomService {
     - Map과 DB에 있는 Rooms가 연동되지 않을 수 있으므로 주의 : 나중에 기능 추가 시 수정 요함
      */
     @Transactional
-    public Rooms joinUser(String userId, WebSocketSession session, String roomName) throws IOException {
+    public Rooms joinUser(ChatMessage chatMessage, WebSocketSession session) throws IOException {
+        String userId = chatMessage.getUserId();
+        String roomName = chatMessage.getRoomName();
+
         User findUser = userRepository.findById(userId);
         //Rooms roomJoined = roomRepository.findRoomByName(roomName);
         Rooms roomJoined = chatRoomMap.getRoomFromRoomList(roomName);
@@ -99,11 +104,11 @@ public class ChatRoomService {
             UserSession newUserSession = new UserSession(findUser, session, null);
 
             //WebRTCEndpoint 생성
-            webRTCSignalingService.createWebRTCEp(roomJoined, newUserSession);
+            webRTCSignalingService.createWebRTCEp(roomJoined, newUserSession, chatMessage);
             roomJoined.addUserAndSession(userId, newUserSession);
 
-            //방에 있는 사용자들과 WebRTCEndpoint 연결하기
-            webRTCSignalingService.connectWebRTCEp(roomJoined, newUserSession);
+            //방에 있는 사용자들과 WebRTCEndpoint 연결하기 - 일단 보류
+            //webRTCSignalingService.connectWebRTCEp(roomJoined, newUserSession);
 
             log.info("방 참가 요청 - userId : " + findUser.getUserId());
             log.info("방 참가 요청 - roomName : " + roomJoined.getRoomName());
@@ -146,16 +151,17 @@ public class ChatRoomService {
     public void handlerActions(WebSocketSession session, ChatMessage chatMessage) throws IOException {
         String roomName = chatMessage.getRoomName();
         String senderId = chatMessage.getUserId();
+        String receiverId = chatMessage.getUserId();
 
         switch(chatMessage.getMessageType()){
             case CREATE:
-                String createdRoomName = createRoom(senderId, session);
+                String createdRoomName = createRoom(chatMessage, session);
                 log.info("webSocketSession : " + session);
                 sendMessageType(session, "CREATE", createdRoomName);
                 break;
 
             case JOIN:
-                Rooms joinedRoom = joinUser(senderId, session, roomName);
+                Rooms joinedRoom = joinUser(chatMessage, session);
                 sendMessageType(session, "JOIN", roomName);
                 chatMessage.setMessage(senderId + "님이 입장하셨습니다.");
                 log.info("webSocketSession : " + session);
@@ -167,6 +173,17 @@ public class ChatRoomService {
                     //방에 있는 기존 사람들에게 새로 들어온 사람의 id 보내기
                     String userEnterMessage = makeUserEnterMessage(senderId);
                     sendMessage(userEnterMessage, session, joinedRoom);
+
+                    //방에 있는 사람들이 새로 들어온 사람에 대해 WebRtcEndpoint 생성 후 downStream에 저장
+                    joinedRoom.getUserInRoomList().values().stream()
+                            .forEach(userSession -> {
+                                if (userSession.getUser().getUserId() != senderId) {
+                                    webRTCSignalingService.createDownStreamEndpoint(joinedRoom, userSession, chatMessage);
+                                    //userSession.getDownStreams().put(senderId, new WebRtcEndpoint.Builder(joinedRoom.getPipeline()).build());
+                                    log.info("{}의 {}에 대한 downStream 생성",userSession.getUser().getUserId(),senderId);
+                                }
+                            }
+                            );
                 }
                 break;
 
@@ -176,7 +193,7 @@ public class ChatRoomService {
                 sendMessage(chatMessage.getMessage(),session, talkRoom);
                 break;
 
-            case SDP_OFFER:
+            case SDP_OFFER :
                 //메세지 받을 때 방 이름도 같이 받아야 함 또한 userId도 받아야함
                 log.info("MessageType : SDP_OFFER");
                 log.info("sdpOffer session : " + session);
@@ -189,9 +206,32 @@ public class ChatRoomService {
             case ICE_CANDIDATE:
                 log.info("MessageType : ICE_CANDIDATE");
                 Rooms iceRoom = RoomList.get(roomName);
-                UserSession iceUserSession = iceRoom.getUserInRoomList().get(senderId);
-                webRTCSignalingService.processIceCandidate(iceUserSession, chatMessage);
+                WebRtcEndpoint iceWebRtcEndpoint = iceRoom.getUserInRoomList().get(senderId).getWebRtcEndpoint();
+                webRTCSignalingService.processIceCandidate(iceWebRtcEndpoint, chatMessage);
                 break;
+
+            case RECEIVER_SDP_OFFER:
+                //senderId - 처음 큰 객체
+                //receiverId - 생성한 작은 객체
+                //처음 큰 객체의 UserSession으로 가서 작은 객체의 downStream 찾고 그 downStream에 대한 sdp
+
+                Rooms room = RoomList.get(roomName);
+                UserSession senderUserSession = room.getUserInRoomList().get(senderId);
+
+                WebRtcEndpoint receiverEndpoint = senderUserSession.getDownStreams().get(receiverId);
+                webRTCSignalingService.processReceiverSdpOffer(senderUserSession,receiverEndpoint, chatMessage);
+
+                break;
+
+//            case RECEIVER_ICE_CANDIDATE:
+//                log.info("MessageType : RECEIVER_ICE_CANDIDATE");
+//                Rooms SenderIceRoom = RoomList.get(roomName);
+//                UserSession senderSession = SenderIceRoom.getUserInRoomList().get(senderId);
+//
+//                WebRtcEndpoint receiveEndpoint = senderSession.getDownStreams().get(receiverId);
+//
+//                webRTCSignalingService.processIceCandidate(receiveEndpoint, chatMessage);
+//                break;
 
             /*
             이후 사람들과 연결을 해야함. 사용자가 서버로 보내는 하나의 stream을 mediapipeline과 연결하고
@@ -222,12 +262,23 @@ public class ChatRoomService {
                         log.info("방 나가기 - userId : " + user.getUserId());
                         log.info("방 나가기 - roomName : " + room.getRoomName());
 
+                        //다른 사람들의 downStream도 Release 후 삭제
+                        user.getRoom().getUserInRoomList().values().forEach(otherUser ->{
+                            if(user.getUserId() != otherUser.getUser().getUserId()){
+                                WebRtcEndpoint leftEndpoint = otherUser.getDownStreams().get(user.getUserId());
+                                leftEndpoint.release();
+                                log.info("방 나가기 - {}의 {} Ep Release", otherUser,user.getUserId());
+                                otherUser.getDownStreams().remove(user.getUserId());
+                            }
+                        }
+                        );
                         user.setRoom(null);
                         return true;
                     }
                     return false;
                 }));
     }
+
 
     /*
     새로 들어온 사람에게 방에 있는 유저들의 id를 반환하는 메세지를 생성하는 메서드
