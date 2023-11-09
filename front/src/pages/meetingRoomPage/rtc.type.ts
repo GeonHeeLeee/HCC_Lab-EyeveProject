@@ -1,4 +1,4 @@
 export interface WebRTCUser {
-  id: string;
+  userId: string;
   stream: MediaStream;
 }
