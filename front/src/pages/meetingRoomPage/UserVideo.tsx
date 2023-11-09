@@ -7,6 +7,7 @@ import { getSocket, initSocket } from '../../services/socket';
 // import { useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/types/redux.type';
+import { login } from '../../store/modules/isLoginSlice';
 
 const pc_config = {
   iceServers: [
@@ -49,6 +50,9 @@ const UserVideo = () => {
         await pc.setLocalDescription(new RTCSessionDescription(sdp));
 
         if (!socketRef.current) return;
+
+        console.log('send receiver offer');
+
         socketRef.current.send(
           JSON.stringify({
             messageType: 'RECEIVER_SDP_OFFER', // TODO: 서버와 이벤트명 어떻게 할 지 정의
@@ -58,6 +62,7 @@ const UserVideo = () => {
             sdpOffer: sdp.sdp, // 오류 발생 가능
           })
         );
+        console.log('send receiver offer success');
       } catch (error) {
         console.log(error);
       }
@@ -72,11 +77,15 @@ const UserVideo = () => {
 
         receivePCsRef.current = { ...receivePCsRef.current, [userId]: pc };
 
+        console.log(receivePCsRef.current);
+
         pc.onicecandidate = (e) => {
           if (!(e.candidate && socketRef.current)) return;
-          console.log('receiver PC onice candidate');
+          console.log('receiver PC onicecandidate');
           // console.log(e.candidate.candidate);
           if (socketRef.current.readyState === WebSocket.OPEN) {
+            console.log(loginUser.userId, userId);
+
             socketRef.current.send(
               JSON.stringify({
                 messageType: 'ICE_CANDIDATE',
@@ -116,6 +125,7 @@ const UserVideo = () => {
       try {
         console.log(`${userId} user enter`);
         const pc = createReceiverPeerConnection(userId);
+        console.log(pc);
 
         if (!(socketRef.current && pc)) return;
         createReceiverOffer(pc, userId);
@@ -141,7 +151,7 @@ const UserVideo = () => {
 
       if (!socketRef.current) return;
 
-      console.log(socketRef.current);
+      // console.log(socketRef.current);
 
       socketRef.current?.send(
         JSON.stringify({
@@ -264,7 +274,7 @@ const UserVideo = () => {
                 // data.userId 가 null 이면
                 // sendPC에 대한 candidate 추가
                 try {
-                  console.log(data);
+                  // console.log(data);
 
                   if (!(data.candidate && sendPCRef.current)) return;
                   console.log('get sender candidate');
@@ -297,9 +307,13 @@ const UserVideo = () => {
             break;
 
           // 새로운 유저가 들어왔을 때, 방에 있는 유저들에 대한 PeerConnection 생성
-          case 'ALL_USERS':
+          case 'USERS_IN_ROOM':
+            console.log('get all users');
+
             ((data: { users: Array<{ userId: string }> }) => {
               data.users.forEach((user) => {
+                console.log(user);
+
                 createReceivePC(user.userId);
               });
             })(data);
