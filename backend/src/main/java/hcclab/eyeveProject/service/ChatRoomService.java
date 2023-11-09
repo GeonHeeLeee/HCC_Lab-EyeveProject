@@ -151,7 +151,7 @@ public class ChatRoomService {
     public void handlerActions(WebSocketSession session, ChatMessage chatMessage) throws IOException {
         String roomName = chatMessage.getRoomName();
         String senderId = chatMessage.getUserId();
-        String receiverId = chatMessage.getUserId();
+        String receiverId = chatMessage.getReceiverId();
 
         switch(chatMessage.getMessageType()){
             case CREATE:
@@ -174,16 +174,25 @@ public class ChatRoomService {
                     String userEnterMessage = makeUserEnterMessage(senderId);
                     sendMessage(userEnterMessage, session, joinedRoom);
 
+                    //메세지 보낸 사람
+                    UserSession senderSession = joinedRoom.getUserInRoomList().values().stream()
+                            .filter(userSession -> (userSession.getUser().getUserId() == senderId)).
+                            findAny().get();
+                    Map senderDownStream = senderSession.getDownStreams();
+
                     //방에 있는 사람들이 새로 들어온 사람에 대해 WebRtcEndpoint 생성 후 downStream에 저장
                     joinedRoom.getUserInRoomList().values().stream()
                             .forEach(userSession -> {
                                 if (userSession.getUser().getUserId() != senderId) {
-                                    webRTCSignalingService.createDownStreamEndpoint(joinedRoom, userSession, chatMessage);
+                                    webRTCSignalingService.createDownStreamEndpoint(joinedRoom, userSession, chatMessage,senderId);
+                                    webRTCSignalingService.createDownStreamEndpoint(joinedRoom,senderSession,chatMessage, userSession.getUser().getUserId());
                                     //userSession.getDownStreams().put(senderId, new WebRtcEndpoint.Builder(joinedRoom.getPipeline()).build());
                                     log.info("{}의 {}에 대한 downStream 생성",userSession.getUser().getUserId(),senderId);
+                                    log.info("{}의 {}에 대한 downStream 생성",senderId,userSession.getUser().getUserId());
                                 }
                             }
                             );
+
                 }
                 break;
 
@@ -206,6 +215,9 @@ public class ChatRoomService {
             case ICE_CANDIDATE:
                 log.info("MessageType : ICE_CANDIDATE");
                 Rooms iceRoom = RoomList.get(roomName);
+                log.info("senderId : {}", senderId);
+                log.info("chatMessage:receiverId - {}",chatMessage.getReceiverId());
+
                 WebRtcEndpoint iceWebRtcEndpoint = iceRoom.getUserInRoomList().get(senderId).getWebRtcEndpoint();
                 webRTCSignalingService.processIceCandidate(iceWebRtcEndpoint, chatMessage);
                 break;
@@ -217,8 +229,12 @@ public class ChatRoomService {
 
                 Rooms room = RoomList.get(roomName);
                 UserSession senderUserSession = room.getUserInRoomList().get(senderId);
+                log.info("RECEIVER_SDP_OFFER : senderId - {}",senderUserSession.getUser().getUserId());
+                log.info("RECEIVER_SDP_OFFER : receiverId - {}",receiverId);
 
                 WebRtcEndpoint receiverEndpoint = senderUserSession.getDownStreams().get(receiverId);
+                log.info(senderUserSession.getDownStreams().keySet().toString());
+                log.info("RECEIVER_SDP_OFFER : receiverEp - {}",receiverEndpoint);
                 webRTCSignalingService.processReceiverSdpOffer(senderUserSession,receiverEndpoint, chatMessage);
 
                 break;
@@ -263,15 +279,15 @@ public class ChatRoomService {
                         log.info("방 나가기 - roomName : " + room.getRoomName());
 
                         //다른 사람들의 downStream도 Release 후 삭제
-                        user.getRoom().getUserInRoomList().values().forEach(otherUser ->{
-                            if(user.getUserId() != otherUser.getUser().getUserId()){
-                                WebRtcEndpoint leftEndpoint = otherUser.getDownStreams().get(user.getUserId());
-                                leftEndpoint.release();
-                                log.info("방 나가기 - {}의 {} Ep Release", otherUser,user.getUserId());
-                                otherUser.getDownStreams().remove(user.getUserId());
-                            }
-                        }
-                        );
+//                        user.getRoom().getUserInRoomList().values().forEach(otherUser ->{
+//                            if(user.getUserId() != otherUser.getUser().getUserId()){
+//                                WebRtcEndpoint leftEndpoint = otherUser.getDownStreams().get(user.getUserId());
+//                                leftEndpoint.release();
+//                                log.info("방 나가기 - {}의 {} Ep Release", otherUser,user.getUserId());
+//                                otherUser.getDownStreams().remove(user.getUserId());
+//                            }
+//                        }
+//                        );
                         user.setRoom(null);
                         return true;
                     }

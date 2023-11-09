@@ -60,6 +60,7 @@ public class WebRTCSignalingService {
         String receiverId = message.getReceiverId();
 
         log.info("Sender({}) - Receiver({}) process Offer",senderId,receiverId);
+        log.info("processReceiverSdpOffer : rtcep - {}",receiverEndpoint);
         String sdpAnswer = receiverEndpoint.processOffer(sdpOffer);
         //Receiver Sdp Answer 메세지 생성
         String jsonSdpAnswer = makeSdpAnswerMessage(sdpAnswer, senderId, receiverId);
@@ -139,6 +140,7 @@ public class WebRTCSignalingService {
         WebRtcEndpoint webRtcEndpoint = new WebRtcEndpoint.Builder(roomJoined.getPipeline()).build();
         addIceEventListener(webRtcEndpoint, userSession, chatMessage);
         userSession.setWebRtcEndpoint(webRtcEndpoint);
+        log.info("userSession.ep : {}",userSession.getWebRtcEndpoint());
         log.info("createRTCEP - set : " + webRtcEndpoint);
         log.info(String.format("%s의 webRTCEp 생성", userSession.getUser().getUserId()));
     }
@@ -159,12 +161,15 @@ public class WebRTCSignalingService {
 //        }
 //    }
 
-    public void createDownStreamEndpoint(Rooms roomJoined, UserSession userSession, ChatMessage chatMessage) {
+    public void createDownStreamEndpoint(Rooms roomJoined, UserSession userSession, ChatMessage chatMessage, String receiverId) {
         WebRtcEndpoint downStreamEndpoint = new WebRtcEndpoint.Builder(roomJoined.getPipeline()).build();
-
+        log.info("createDownStreamEndpoint 실행");
+        log.info("생성된 Endpoint : {}",downStreamEndpoint);
         addIceEventListener(downStreamEndpoint, userSession, chatMessage);
         //downStream에 추가
-        userSession.getDownStreams().put(chatMessage.getReceiverId(), downStreamEndpoint);
+        log.info("createDownStreamEp - receiverId : {}",receiverId);
+        userSession.getDownStreams().put(receiverId, downStreamEndpoint);
+        log.info("createDownStreamEP - downstream : {}",userSession.getDownStreams().keySet().toString());
         //receiver와 sender endpoint 연결
         userSession.getWebRtcEndpoint().connect(downStreamEndpoint);
     }
