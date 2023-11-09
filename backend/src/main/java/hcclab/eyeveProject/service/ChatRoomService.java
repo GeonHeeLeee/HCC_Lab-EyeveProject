@@ -71,7 +71,7 @@ public class ChatRoomService {
     - front 처리를 위해 요청 세션에게 messageType을 재전송
     - 방 생성(CREATE)시, roomName도 함께 넣어서 전송
      */
-    public void sendMessageType(WebSocketSession session,String messageType, String roomName){
+    public synchronized void sendMessageType(WebSocketSession session,String messageType, String roomName){
         Map<String, String> message = new HashMap<>();
         message.put("messageType", messageType);
         try {
@@ -128,7 +128,7 @@ public class ChatRoomService {
     메세지 전송 메서드
     - 메세지를 보낼 시, 자신(session)을 제외한 방에 있는 참가자들에게 메세지 전송
      */
-    public void sendMessage(String message, WebSocketSession session, Rooms room) {
+    public synchronized void sendMessage(String message, WebSocketSession session, Rooms room) {
         room.getUserInRoomList().values().parallelStream()
                 .map(UserSession::getWebSocketSession)
                 .filter(s -> s != session)
@@ -156,7 +156,6 @@ public class ChatRoomService {
         switch(chatMessage.getMessageType()){
             case CREATE:
                 String createdRoomName = createRoom(chatMessage, session);
-                log.info("webSocketSession : " + session);
                 sendMessageType(session, "CREATE", createdRoomName);
                 break;
 
@@ -164,11 +163,8 @@ public class ChatRoomService {
                 Rooms joinedRoom = joinUser(chatMessage, session);
                 sendMessageType(session, "JOIN", roomName);
                 chatMessage.setMessage(senderId + "님이 입장하셨습니다.");
-                log.info("webSocketSession : " + session);
                 if(joinedRoom != null){
-                    //새로 들어온 사람에게 메세지 보내기
-                    String userInRoomMessage = makeUserInRoomMessage(joinedRoom);
-                    session.sendMessage(new TextMessage(userInRoomMessage));
+
 
                     //방에 있는 기존 사람들에게 새로 들어온 사람의 id 보내기
                     String userEnterMessage = makeUserEnterMessage(senderId);
@@ -189,8 +185,6 @@ public class ChatRoomService {
                                     //새로 들어온 사람이 기존 사람들의 endpoint 생성 후 연결
                                     webRTCSignalingService.createDownStreamEndpoint(joinedRoom,senderSession,chatMessage, userSession);
 
-                                    log.info("{}의 {}에 대한 downStream 생성",userSession.getUser().getUserId(),senderId);
-                                    log.info("{}의 {}에 대한 downStream 생성",senderId,userSession.getUser().getUserId());
                                 }
                             }
                             );
@@ -205,11 +199,15 @@ public class ChatRoomService {
                 break;
 
             case SDP_OFFER :
+
                 //메세지 받을 때 방 이름도 같이 받아야 함 또한 userId도 받아야함
                 log.info("MessageType : SDP_OFFER");
-                log.info("sdpOffer session : " + session);
+                log.info("sdpOffer Sender : " + senderId);
                 Rooms offeredRoom = RoomList.get(roomName);
-                log.info("senderId : " + senderId);
+                //새로 들어온 사람에게 메세지 보내기
+                String userInRoomMessage = makeUserInRoomMessage(offeredRoom);
+                session.sendMessage(new TextMessage(userInRoomMessage));
+
                 UserSession offeredUserSession = offeredRoom.getUserInRoomList().get(senderId);
                 webRTCSignalingService.processSdpOffer(offeredUserSession, chatMessage);
                 break;
@@ -217,8 +215,6 @@ public class ChatRoomService {
             case ICE_CANDIDATE:
                 log.info("MessageType : ICE_CANDIDATE");
                 Rooms iceRoom = RoomList.get(roomName);
-                log.info("senderId : {}", senderId);
-                log.info("chatMessage:receiverId - {}",chatMessage.getReceiverId());
 
                 WebRtcEndpoint iceWebRtcEndpoint = iceRoom.getUserInRoomList().get(senderId).getWebRtcEndpoint();
                 webRTCSignalingService.processIceCandidate(iceWebRtcEndpoint, chatMessage);
@@ -235,8 +231,7 @@ public class ChatRoomService {
                 log.info("RECEIVER_SDP_OFFER : receiverId - {}",receiverId);
 
                 WebRtcEndpoint receiverEndpoint = senderUserSession.getDownStreams().get(receiverId);
-                log.info("RECEIVER_SDP_OFFER : sender DownStream - {}",senderUserSession.getDownStreams().keySet().toString());
-                log.info("RECEIVER_SDP_OFFER : receiverEp - {}",receiverEndpoint);
+                log.info("RECEIVER_SDP_OFFER : {}의 DownStream - {}",senderUserSession.getUser().getUserId(),senderUserSession.getDownStreams().keySet());
                 webRTCSignalingService.processReceiverSdpOffer(senderUserSession,receiverEndpoint, chatMessage);
 
                 break;
