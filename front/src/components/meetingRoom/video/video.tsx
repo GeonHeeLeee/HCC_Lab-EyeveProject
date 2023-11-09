@@ -17,10 +17,12 @@ const VideoContainer = Styled.video`
 
 interface Props {
   stream: MediaStream;
+  // stream: any;
+  videoKey: number;
   muted?: boolean;
 }
 
-const Video = ({ stream, muted }: Props) => {
+const Video = ({ stream, videoKey, muted }: Props) => {
   const ref = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState<boolean>(false);
 
@@ -29,7 +31,11 @@ const Video = ({ stream, muted }: Props) => {
     if (muted) setIsMuted(muted);
   }, [stream, muted]);
 
-  return <VideoContainer ref={ref} muted={isMuted} autoPlay />;
+  return (
+    <Container>
+      <VideoContainer ref={ref} muted={isMuted} autoPlay />;
+    </Container>
+  );
 };
 
 export default Video;

@@ -20,8 +20,6 @@ const pc_config = {
       urls: 'stun:stun.l.google.com:19302',
     },
   ],
-  offerToReceiveAudio: true,
-  offerToReceiveVideo: true,
 };
 
 const UserVideo = () => {
@@ -100,7 +98,7 @@ const UserVideo = () => {
 
         pc.ontrack = (e) => {
           console.log('ontrack success');
-          console.log(e);
+          console.log(e.streams[0]);
           setUsers((oldUsers) =>
             oldUsers
               .filter((user) => user.userId !== userId)
@@ -308,11 +306,12 @@ const UserVideo = () => {
             console.log('get all users');
 
             ((data: { users: Array<string> }) => {
-              data.users.forEach((user) => {
-                console.log(user);
-
-                createReceivePC(user);
-              });
+              data.users
+                .filter((user) => user !== loginUser.userId)
+                .forEach((user) => {
+                  console.log(user);
+                  createReceivePC(user);
+                });
             })(data);
             break;
 
@@ -392,21 +391,14 @@ const UserVideo = () => {
         ref={localVideoRef}
         autoPlay
       />
-      {/* <video
-        style={{
-          width: 240,
-          height: 240,
-          margin: 5,
-          backgroundColor: 'black',
-        }}
-        muted
-        ref={remoteVideoRef}
-        autoPlay
-      /> */}
+      {/* <Video stream={localStreamRef.current} videoKey={1} /> */}
 
-      {users.map((user, index) => (
-        <Video key={index} stream={user.stream} />
-      ))}
+      {users.map(
+        (user, index) => (
+          console.log(user.stream),
+          (<Video videoKey={index} stream={user.stream} />)
+        )
+      )}
     </div>
   );
 };
