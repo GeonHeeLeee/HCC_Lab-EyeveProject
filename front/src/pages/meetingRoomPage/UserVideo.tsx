@@ -39,7 +39,7 @@ const UserVideo = () => {
   const [users, setUsers] = useState<Array<WebRTCUser>>([]);
 
   const createReceiverOffer = useCallback(
-    async (pc: RTCPeerConnection, senderUserID: string) => {
+    async (pc: RTCPeerConnection, senderId: string) => {
       try {
         const sdp = await pc.createOffer({
           offerToReceiveAudio: true,
@@ -51,9 +51,11 @@ const UserVideo = () => {
         if (!socketRef.current) return;
         socketRef.current.send(
           JSON.stringify({
-            senderUserID: senderUserID, // TODO: 보낸 사람의 userId 를 보내주어야 하는 것인지 정의
-            sdp,
-            messageType: 'SDP_OFFER', // TODO: 서버와 이벤트명 어떻게 할 지 정의
+            messageType: 'RECEIVER_SDP_OFFER', // TODO: 서버와 이벤트명 어떻게 할 지 정의
+            userId: loginUser.userId, // TODO: 보낸 사람의 userId 를 보내주어야 하는 것인지 정의
+            receiverId: senderId,
+            roomName: loginUser.roomName,
+            sdpOffer: sdp.sdp, // 오류 발생 가능
           })
         );
       } catch (error) {
@@ -77,9 +79,10 @@ const UserVideo = () => {
           if (socketRef.current.readyState === WebSocket.OPEN) {
             socketRef.current.send(
               JSON.stringify({
-                messageType: 'ICE_CANDIDATE_RECEIVER', // TODO: 추후 이벤트명과 데이터 정의
+                messageType: 'ICE_CANDIDATE',
                 iceCandidate: e.candidate,
                 userId: loginUser.userId,
+                receiverId: userId,
                 roomName: loginUser.roomName,
               })
             );
@@ -115,7 +118,7 @@ const UserVideo = () => {
         const pc = createReceiverPeerConnection(userId);
 
         if (!(socketRef.current && pc)) return;
-        createReceiverOffer(pc, loginUser.userId);
+        createReceiverOffer(pc, userId);
       } catch (error) {
         console.log(error);
       }
@@ -166,6 +169,7 @@ const UserVideo = () => {
             messageType: 'ICE_CANDIDATE',
             iceCandidate: e.candidate,
             userId: loginUser.userId,
+            receiverId: null,
             roomName: loginUser.roomName,
           })
         );
@@ -250,103 +254,99 @@ const UserVideo = () => {
             break;
 
           case 'ICE_CANDIDATE':
-            (async (data: { candidate: RTCIceCandidateInit }) => {
-              try {
-                if (!(data.candidate && sendPCRef.current)) return;
-                console.log('get sender candidate');
-                await sendPCRef.current.addIceCandidate(
-                  new RTCIceCandidate(data.candidate)
-                );
-                console.log('candidate add success');
-              } catch (error) {
-                console.log(error);
+            (async (data: {
+              candidate: RTCIceCandidateInit;
+              userId: string;
+              receiverId: string | null;
+            }) => {
+              //TODO: 서버에서 보내주는 candidate 의 userId 가 null 인지 아닌지에 따라 분기
+              if (data.receiverId === null) {
+                // data.userId 가 null 이면
+                // sendPC에 대한 candidate 추가
+                try {
+                  console.log(data);
+
+                  if (!(data.candidate && sendPCRef.current)) return;
+                  console.log('get sender candidate');
+                  await sendPCRef.current.addIceCandidate(
+                    new RTCIceCandidate(data.candidate)
+                  );
+                  console.log('candidate add success');
+                } catch (error) {
+                  console.log(error);
+                }
+              } else {
+                // data.userId 가 null 이 아니면
+                // receivePCsRef.current[data.userId] 에 대한 candidate 추가
+                try {
+                  console.log(data);
+                  console.log(`get user(${data.receiverId}) candidate`);
+                  const pc: RTCPeerConnection =
+                    receivePCsRef.current[data.receiverId];
+                  if (!pc) return;
+
+                  await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+                  console.log(
+                    `userId ${data.receiverId} add candidate success`
+                  );
+                } catch (error) {
+                  console.log(error);
+                }
               }
             })(data);
             break;
 
-          // case 'SDP_OFFER':
-          //   (async (data: {
-          //     messageType: string;
-          //     SDP_OFFER: string;
-          //     userId: string;
-          //   }) => {
-          //     try {
-          //       if (!sendPCRef.current) return;
-          //       console.log('get sender offer');
-
-          //       await sendPCRef.current.setRemoteDescription(
-          //         new RTCSessionDescription({
-          //           type: 'offer',
-          //           sdp: data.SDP_OFFER,
-          //         })
-          //       );
-          //       const sdpAnswer = await sendPCRef.current.createAnswer();
-
-          //       await sendPCRef.current.setLocalDescription(sdpAnswer);
-
-          //       socketRef.current?.send(
-          //         JSON.stringify({
-          //           messageType: 'SDP_ANSWER',
-          //           roomName: loginUser.roomName,
-          //           userId: loginUser.userId,
-          //           sdpAnswer: sdpAnswer.sdp,
-          //         })
-          //       );
-          //     } catch (error) {
-          //       console.log(error);
-          //     }
-          //   })(data);
-          //   break;
-
           // 새로운 유저가 들어왔을 때, 방에 있는 유저들에 대한 PeerConnection 생성
           case 'ALL_USERS':
-            (data: { users: Array<{ userId: string }> }) => {
+            ((data: { users: Array<{ userId: string }> }) => {
               data.users.forEach((user) => {
                 createReceivePC(user.userId);
               });
-            };
+            })(data);
             break;
 
           case 'USER_ENTER':
             createReceivePC(data.userId);
             break;
 
-          // TODO: 이벤트명 서버와 정의
-          case 'getReceiverAnswer':
-            (async (data: { userId: string; sdp: RTCSessionDescription }) => {
-              try {
-                console.log(`get user(${data.userId}) answer`);
-                const pc: RTCPeerConnection =
-                  receivePCsRef.current[data.userId];
-                if (!pc) return;
-                await pc.setRemoteDescription(data.sdp); // TODO: 서버에서 보내주는 sdp 이름이 맞는 지 확인
-                console.log(`userId ${data.userId} set remote sdp success`);
-              } catch (error) {
-                console.log(error);
-              }
-            })(data);
-            break;
-
-          // TODO: 이벤트명 서버와 정의
-          case 'getReceiverCandidata':
+          case 'RECEIVER_SDP_ANSWER':
             (async (data: {
-              userId: string;
-              candidate: RTCIceCandidateInit;
+              receiverId: string;
+              SDP_ANSWER: RTCSessionDescription;
             }) => {
               try {
-                console.log(data);
-                console.log(`get user(${data.userId}) candidate`);
+                console.log(`get user(${data.receiverId}) answer`);
                 const pc: RTCPeerConnection =
-                  receivePCsRef.current[data.userId];
+                  receivePCsRef.current[data.receiverId];
                 if (!pc) return;
-
-                await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-                console.log(`userId ${data.userId} add candidate success`);
+                await pc.setRemoteDescription(data.SDP_ANSWER); // TODO: 서버에서 보내주는 sdp 이름이 맞는 지 확인
+                console.log(`userId ${data.receiverId} set remote sdp success`);
               } catch (error) {
                 console.log(error);
               }
             })(data);
             break;
+
+          // TODO: 이벤트명 서버와 정의
+          // case 'RECEIVER_ICE_CANDIDATE':
+          //   (async (data: {
+          //     receiverId: string;
+          //     candidate: RTCIceCandidateInit;
+          //   }) => {
+          //     try {
+          //       console.log(data);
+          //       console.log(`get user(${data.receiverId}) candidate`);
+          //       const pc: RTCPeerConnection =
+          //         receivePCsRef.current[data.receiverId];
+          //       if (!pc) return;
+
+          //       await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+          //       console.log(`userId ${data.receiverId} add candidate succes s`);
+          //     } catch (error) {
+          //       console.log(error);
+          //     }
+          //   })(data);
+          //   break;
 
           default:
             console.log('error');
@@ -360,7 +360,12 @@ const UserVideo = () => {
         }
       };
     }
-  }, [getLocalStream, createSenderOffer, createSenderPeerConnection]);
+  }, [
+    getLocalStream,
+    createSenderOffer,
+    createSenderPeerConnection,
+    createReceivePC,
+  ]);
   // }, []);
 
   return (

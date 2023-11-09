@@ -4,7 +4,7 @@ import Timeline from '../../components/meetingRoom/timeline/Timeline.component';
 import Chat from '../../components/meetingRoom/chat/Chat.componenet';
 import FileShare from '../../components/meetingRoom/fileShare/FileShare.component';
 
-import UsersVideo from './UserVideo.1';
+import UsersVideo from './UserVideo';
 
 const MeetingRoom = () => {
   // const {socket: mySocket} = useSelector((state: RootState) => state.socket);
