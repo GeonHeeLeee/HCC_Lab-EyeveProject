@@ -1,30 +1,14 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-
 import { WebRTCUser } from './rtc.type';
-
 import Video from '../../components/meetingRoom/video/video';
 import { getSocket, initSocket } from '../../services/socket';
-// import { useDispatch } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/types/redux.type';
+import { pc_config } from './UserVideo';
 
-const pc_config = {
-  iceServers: [
-    // {
-    //   urls: 'stun:[STUN_IP]:[PORT]',
-    //   'credentials': '[YOR CREDENTIALS]',
-    //   'username': '[USERNAME]'
-    // },
-    {
-      urls: 'stun:stun.l.google.com:19302',
-    },
-  ],
-  offerToReceiveAudio: true,
-  offerToReceiveVideo: true,
-};
-
-const UserVideo = () => {
-  // const dispatch = useDispatch();
+export const UserVideo = () => {
+  const dispatch = useDispatch();
 
   const loginUser = useSelector((state: RootState) => state.loginUser);
 
@@ -35,11 +19,12 @@ const UserVideo = () => {
   const receivePCsRef = useRef<{ [userId: string]: RTCPeerConnection }>({});
 
   const localVideoRef = useRef<HTMLVideoElement>(null); // 자신의 MediaStream 출력할 video 태그의 ref
+
   // const remoteVideoRef = useRef<HTMLVideoElement>(null); // 상대방의 MediaStream 출력할 video 태그의 ref
   const [users, setUsers] = useState<Array<WebRTCUser>>([]);
 
   const createReceiverOffer = useCallback(
-    async (pc: RTCPeerConnection, senderUserID: string) => {
+    async (pc: RTCPeerConnection, senderUsertID: string) => {
       try {
         const sdp = await pc.createOffer({
           offerToReceiveAudio: true,
@@ -51,9 +36,8 @@ const UserVideo = () => {
         if (!socketRef.current) return;
         socketRef.current.send(
           JSON.stringify({
-            senderUserID: senderUserID, // TODO: 보낸 사람의 userId 를 보내주어야 하는 것인지 정의
             sdp,
-            messageType: 'SDP_OFFER', // TODO: 서버와 이벤트명 어떻게 할 지 정의
+            messageType: 'SDP_OFFER',
           })
         );
       } catch (error) {
@@ -77,7 +61,7 @@ const UserVideo = () => {
           if (socketRef.current.readyState === WebSocket.OPEN) {
             socketRef.current.send(
               JSON.stringify({
-                messageType: 'ICE_CANDIDATE_RECEIVER', // TODO: 추후 이벤트명과 데이터 정의
+                messageType: 'ICE_CANDIDATE_RECEIVER',
                 iceCandidate: e.candidate,
                 userId: loginUser.userId,
                 roomName: loginUser.roomName,
@@ -115,7 +99,7 @@ const UserVideo = () => {
         const pc = createReceiverPeerConnection(userId);
 
         if (!(socketRef.current && pc)) return;
-        createReceiverOffer(pc, loginUser.userId);
+        createReceiverOffer(pc, userId);
       } catch (error) {
         console.log(error);
       }
@@ -235,7 +219,6 @@ const UserVideo = () => {
                 console.log('get sender answer');
                 // console.log(data);
                 // console.log(data.SDP_ANSWER);
-
                 await sendPCRef.current.setRemoteDescription(
                   new RTCSessionDescription({
                     type: 'answer',
@@ -273,7 +256,6 @@ const UserVideo = () => {
           //     try {
           //       if (!sendPCRef.current) return;
           //       console.log('get sender offer');
-
           //       await sendPCRef.current.setRemoteDescription(
           //         new RTCSessionDescription({
           //           type: 'offer',
@@ -281,9 +263,7 @@ const UserVideo = () => {
           //         })
           //       );
           //       const sdpAnswer = await sendPCRef.current.createAnswer();
-
           //       await sendPCRef.current.setLocalDescription(sdpAnswer);
-
           //       socketRef.current?.send(
           //         JSON.stringify({
           //           messageType: 'SDP_ANSWER',
@@ -297,7 +277,6 @@ const UserVideo = () => {
           //     }
           //   })(data);
           //   break;
-
           // 새로운 유저가 들어왔을 때, 방에 있는 유저들에 대한 PeerConnection 생성
           case 'ALL_USERS':
             (data: { users: Array<{ userId: string }> }) => {
@@ -311,7 +290,6 @@ const UserVideo = () => {
             createReceivePC(data.userId);
             break;
 
-          // TODO: 이벤트명 서버와 정의
           case 'getReceiverAnswer':
             (async (data: { userId: string; sdp: RTCSessionDescription }) => {
               try {
@@ -319,7 +297,7 @@ const UserVideo = () => {
                 const pc: RTCPeerConnection =
                   receivePCsRef.current[data.userId];
                 if (!pc) return;
-                await pc.setRemoteDescription(data.sdp); // TODO: 서버에서 보내주는 sdp 이름이 맞는 지 확인
+                await pc.setRemoteDescription(data.sdp);
                 console.log(`userId ${data.userId} set remote sdp success`);
               } catch (error) {
                 console.log(error);
@@ -327,7 +305,6 @@ const UserVideo = () => {
             })(data);
             break;
 
-          // TODO: 이벤트명 서버와 정의
           case 'getReceiverCandidata':
             (async (data: {
               userId: string;
@@ -362,7 +339,6 @@ const UserVideo = () => {
     }
   }, [getLocalStream, createSenderOffer, createSenderPeerConnection]);
   // }, []);
-
   return (
     <div>
       <video
@@ -377,16 +353,16 @@ const UserVideo = () => {
         autoPlay
       />
       {/* <video
-        style={{
-          width: 240,
-          height: 240,
-          margin: 5,
-          backgroundColor: 'black',
-        }}
-        muted
-        ref={remoteVideoRef}
-        autoPlay
-      /> */}
+              style={{
+                width: 240,
+                height: 240,
+                margin: 5,
+                backgroundColor: 'black',
+              }}
+              muted
+              ref={remoteVideoRef}
+              autoPlay
+            /> */}
 
       {users.map((user, index) => (
         <Video key={index} stream={user.stream} />
@@ -394,5 +370,3 @@ const UserVideo = () => {
     </div>
   );
 };
-
-export default UserVideo;
