@@ -17,7 +17,6 @@ const VideoContainer = Styled.video`
 
 interface Props {
   stream: MediaStream;
-  // stream: any;
   videoKey: number;
   muted?: boolean;
 }
@@ -28,6 +27,8 @@ const Video = ({ stream, videoKey, muted }: Props) => {
 
   useEffect(() => {
     if (ref.current) ref.current.srcObject = stream;
+    console.log('stream', ref.current?.srcObject);
+
     if (muted) setIsMuted(muted);
   }, [stream, muted]);
 
