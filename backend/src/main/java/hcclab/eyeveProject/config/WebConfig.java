@@ -41,4 +41,6 @@ public class WebConfig implements WebMvcConfigurer {
     public KurentoClient kurentoClient() {
         return KurentoClient.create();
     }
+
+
 }

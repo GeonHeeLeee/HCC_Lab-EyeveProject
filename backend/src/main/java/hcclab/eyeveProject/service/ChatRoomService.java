@@ -213,11 +213,12 @@ public class ChatRoomService {
                 break;
 
             case ICE_CANDIDATE:
-                log.info("MessageType : ICE_CANDIDATE");
+                log.info("MessageType : ICE_CANDIDATE, senderId: {}, receiverId: {}", chatMessage.getUserId(),chatMessage.getReceiverId());
                 Rooms iceRoom = RoomList.get(roomName);
 
                 WebRtcEndpoint iceWebRtcEndpoint = iceRoom.getUserInRoomList().get(senderId).getWebRtcEndpoint();
-                webRTCSignalingService.processIceCandidate(iceWebRtcEndpoint, chatMessage);
+                WebRtcEndpoint receiverWebRtcEndpoint = iceRoom.getUserInRoomList().get(senderId).getDownStreams().get(chatMessage.getReceiverId());
+                webRTCSignalingService.processIceCandidate(iceWebRtcEndpoint,receiverWebRtcEndpoint, chatMessage);
                 break;
 
             case RECEIVER_SDP_OFFER:

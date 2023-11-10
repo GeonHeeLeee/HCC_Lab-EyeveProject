@@ -106,7 +106,7 @@ public class WebRTCSignalingService {
         json.put("messageType", "ICE_CANDIDATE");
         json.put("userId", chatMessage.getUserId());
         json.put("receiverId", chatMessage.getReceiverId());
-
+        log.info("makeIceCandidateMessage : userId {}, receiver Id {}", chatMessage.getUserId(), chatMessage.getReceiverId());
         IceCandidatePayload iceCandidatePayload =
                 new IceCandidatePayload(iceCandidate.getCandidate(), iceCandidate.getSdpMid(), iceCandidate.getSdpMLineIndex());
         json.put("candidate", iceCandidatePayload);
@@ -120,12 +120,17 @@ public class WebRTCSignalingService {
     사용자로부터 받은 iceCandidate 메세지 처리
     - 해당 WebRtcEndpoint에 iceCandidate 등록
      */
-    public void processIceCandidate(WebRtcEndpoint webRtcEndpoint, ChatMessage message) {
+    public void processIceCandidate(WebRtcEndpoint webRtcEndpoint,WebRtcEndpoint receiverWebRtcEndpoint, ChatMessage message) {
         IceCandidatePayload payload = message.getIceCandidate();
         IceCandidate iceCandidate =
                 new IceCandidate(payload.getCandidate(), payload.getSdpMid(), payload.getSdpMLineIndex());
         log.info("processIceCandidate 함수 호출");
-        webRtcEndpoint.addIceCandidate(iceCandidate);
+        if(receiverWebRtcEndpoint == null) {
+            webRtcEndpoint.addIceCandidate(iceCandidate);
+        }
+        else{
+            receiverWebRtcEndpoint.addIceCandidate(iceCandidate);
+        }
     }
 
     /*
@@ -155,16 +160,18 @@ public class WebRTCSignalingService {
 //        }
 //    }
 
-    public void createDownStreamEndpoint(Rooms roomJoined, UserSession senderSession, ChatMessage chatMessage, UserSession receiverSession) {
-        WebRtcEndpoint downStreamEndpoint = new WebRtcEndpoint.Builder(roomJoined.getPipeline()).build();
+    public void createDownStreamEndpoint(Rooms roomJoined, UserSession receiverSession, ChatMessage chatMessage, UserSession senderSession) {
+        WebRtcEndpoint receiverDownStream = new WebRtcEndpoint.Builder(roomJoined.getPipeline()).build();
         String receiverId = receiverSession.getUser().getUserId();
+
         log.info("createDownStreamEndpoint 실행");
-        addIceEventListener(downStreamEndpoint, senderSession, chatMessage);
-        //downStream에 추가
-        senderSession.getDownStreams().put(receiverId, downStreamEndpoint);
+        addIceEventListener(receiverDownStream, senderSession, chatMessage);
+        //DownStream에 추가
+        senderSession.getDownStreams().put(receiverId, receiverDownStream);
         log.info("createDownStreamEP - sender{}의 downstream : {}",senderSession.getUser().getUserId(),senderSession.getDownStreams().keySet());
-        //receiver와 sender endpoint 연결
-        receiverSession.getWebRtcEndpoint().connect(downStreamEndpoint);
+        //sender에 receiver 연결
+        senderSession.getWebRtcEndpoint().connect(receiverDownStream);
+        receiverSession.getWebRtcEndpoint().connect(receiverDownStream);
     }
 
 
@@ -177,11 +184,10 @@ public class WebRTCSignalingService {
         webRtcEndpoint.addIceCandidateFoundListener(event -> {
             try {
                 IceCandidate iceCandidate = event.getCandidate();
-
                 String jsonMessage = makeIceCandidateMessage(iceCandidate, chatMessage);
                 synchronized (userSession.getWebSocketSession()) {
                     userSession.getWebSocketSession().sendMessage(new TextMessage(jsonMessage));
-                    log.info("sender:{}의 IceCandidate 전송 성공",userSession.getUser().getUserId());
+                    log.info("sender:{}, receiver:{}의 IceCandidate 전송 성공",chatMessage.getUserId(), chatMessage.getReceiverId());
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
