@@ -1,7 +1,5 @@
 package hcclab.eyeveProject.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import hcclab.eyeveProject.domain.ChatMessage;
 import hcclab.eyeveProject.domain.ChatRoomMap;
 import hcclab.eyeveProject.domain.UserSession;
@@ -15,9 +13,7 @@ import org.kurento.client.KurentoClient;
 import org.kurento.client.WebRtcEndpoint;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.servlet.tags.form.OptionsTag;
 import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 import java.io.IOException;
 import java.util.*;
@@ -33,7 +29,7 @@ public class ChatRoomService {
     private final WebRTCSignalingService webRTCSignalingService;
     private final ChatRoomMap chatRoomMap = ChatRoomMap.getInstance();
     private final Map<String, Rooms> RoomList = chatRoomMap.getRoomList();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final SignalingMessageService signalingMessageService;
 
     /*
     방 생성 메서드
@@ -64,23 +60,6 @@ public class ChatRoomService {
         log.info("방 생성 요청 - 현재 방의 수 : " + RoomList.size());
 
         return createdRoom.getRoomName();
-    }
-
-    /*
-    요청 세션에게 messageType 재전송
-    - front 처리를 위해 요청 세션에게 messageType을 재전송
-    - 방 생성(CREATE)시, roomName도 함께 넣어서 전송
-     */
-    public synchronized void sendMessageType(WebSocketSession session,String messageType, String roomName){
-        Map<String, String> message = new HashMap<>();
-        message.put("messageType", messageType);
-        try {
-            if(messageType.equals("CREATE") || messageType.equals("JOIN")) {message.put("roomName", roomName);}
-            String jsonMessage = objectMapper.writeValueAsString(message);
-            session.sendMessage(new TextMessage(jsonMessage));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
 
@@ -119,26 +98,6 @@ public class ChatRoomService {
     }
 
 
-
-    /*
-    메세지 전송 메서드
-    - 메세지를 보낼 시, 자신(session)을 제외한 방에 있는 참가자들에게 메세지 전송
-     */
-    public synchronized void sendMessage(String message, WebSocketSession session, Rooms room) {
-        room.getUserInRoomList().values().parallelStream()
-                .map(UserSession::getWebSocketSession)
-                .filter(s -> s != session)
-                .forEach(s -> {
-                    try {
-                        s.sendMessage(new TextMessage(message));
-                        log.info("방 메세지 전달 - 인원 수 : " + room.getUserInRoomList().size());
-                        log.info("방 메세지 전달 - 내용 : " + message + ", 보낸 이 : " + session.getId());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-    }
-
     /*
     messageType에 따른 동작 처리 메서드
     - messageType에 따라 각 다른 동작 수행
@@ -148,29 +107,28 @@ public class ChatRoomService {
         String roomName = chatMessage.getRoomName();
         String senderId = chatMessage.getUserId();
         String receiverId = chatMessage.getReceiverId();
-
+        log.info("ChatMessage : " + chatMessage.toString());
         switch(chatMessage.getMessageType()){
             case CREATE:
                 String createdRoomName = createRoom(chatMessage, session);
-                sendMessageType(session, "CREATE", createdRoomName);
+                signalingMessageService.sendMessageType(session, "CREATE", createdRoomName);
                 break;
 
             case JOIN:
                 Rooms joinedRoom = joinUser(chatMessage, session);
-                sendMessageType(session, "JOIN", roomName);
+                signalingMessageService.sendMessageType(session, "JOIN", roomName);
                 chatMessage.setMessage(senderId + "님이 입장하셨습니다.");
                 if(joinedRoom != null){
 
 
                     //방에 있는 기존 사람들에게 새로 들어온 사람의 id 보내기
-                    String userEnterMessage = makeUserEnterMessage(senderId);
-                    sendMessage(userEnterMessage, session, joinedRoom);
+                    String userEnterMessage = signalingMessageService.makeUserEnterMessage(senderId);
+                    signalingMessageService.sendMessageExceptSelf(userEnterMessage, session, joinedRoom);
 
                     //메세지 보낸 사람
                     UserSession senderSession = joinedRoom.getUserInRoomList().values().stream()
                             .filter(userSession -> (userSession.getUser().getUserId() == senderId)).
                             findAny().get();
-                    Map senderDownStream = senderSession.getDownStreams();
 
                     //방에 있는 사람들이 새로 들어온 사람에 대해 WebRtcEndpoint 생성 후 downStream에 저장
                     joinedRoom.getUserInRoomList().values().stream()
@@ -189,9 +147,9 @@ public class ChatRoomService {
                 break;
 
             case CHAT :
-                sendMessageType(session, "CHAT", null);
+                signalingMessageService.sendMessageType(session, "CHAT", null);
                 Rooms talkRoom = RoomList.get(roomName);
-                sendMessage(chatMessage.getMessage(),session, talkRoom);
+                signalingMessageService.sendMessageExceptSelf(chatMessage.getMessage(),session, talkRoom);
                 break;
 
             case SDP_OFFER :
@@ -200,7 +158,7 @@ public class ChatRoomService {
                 log.info("sdpOffer Sender : " + senderId);
                 Rooms offeredRoom = RoomList.get(roomName);
                 //새로 들어온 사람에게 메세지 보내기
-                String userInRoomMessage = makeUserInRoomMessage(offeredRoom);
+                String userInRoomMessage = signalingMessageService.makeUserInRoomMessage(offeredRoom);
                 session.sendMessage(new TextMessage(userInRoomMessage));
 
                 UserSession offeredUserSession = offeredRoom.getUserInRoomList().get(senderId);
@@ -230,9 +188,11 @@ public class ChatRoomService {
                 log.info("RECEIVER_SDP_OFFER : {}의 DownStream - {}",senderUserSession.getUser().getUserId(),senderUserSession.getDownStreams().keySet());
                 webRTCSignalingService.processReceiverSdpOffer(senderUserSession,receiverEndpoint, chatMessage);
                 break;
+
             case LEAVE:
-
-
+                String leftMessage = signalingMessageService.makeUserLeaveMessage(senderId);
+                signalingMessageService.sendMessageExceptSelf(leftMessage, session, RoomList.get(roomName)); //방에 있는 다른 사람들에게 방에 나갔다고 전달
+                session.close(); //afterConnectionClosed 자동 호출되어 방 나가기 로직 수행
         }
     }
 
@@ -263,32 +223,6 @@ public class ChatRoomService {
         }
 
 
-    }
-
-
-    /*
-    새로 들어온 사람에게 방에 있는 유저들의 id를 반환하는 메세지를 생성하는 메서드
-    - messageType : USERS_IN_ROOM
-    - 해당 방에 있는 사람들의 id 반환
-     */
-    public String makeUserInRoomMessage(Rooms room) throws JsonProcessingException {
-        Map<String, Object> json = new HashMap<>();
-        json.put("messageType","USERS_IN_ROOM");
-        json.put("users",room.getUserInRoomList().keySet());
-        log.info("USERS_IN_ROOM {}",room.getUserInRoomList().keySet());
-        return objectMapper.writeValueAsString(json);
-    }
-
-
-    /*
-    방에 있는 기존 사람들에게 새로 들어온 사람의 Id 반환하는 메세지 생성
-    - messageType : USER_ENTER
-     */
-    public String makeUserEnterMessage(String enteredUserId) throws JsonProcessingException {
-        Map<String, Object> json = new HashMap<>();
-        json.put("messageType","USER_ENTER");
-        json.put("userId",enteredUserId);
-        return objectMapper.writeValueAsString(json);
     }
 
     /*
