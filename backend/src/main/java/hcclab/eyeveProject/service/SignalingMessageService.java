@@ -2,9 +2,13 @@ package hcclab.eyeveProject.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import hcclab.eyeveProject.domain.ChatMessage;
+import hcclab.eyeveProject.domain.IceCandidatePayload;
 import hcclab.eyeveProject.domain.UserSession;
 import hcclab.eyeveProject.entity.Rooms;
 import lombok.extern.slf4j.Slf4j;
+import org.kurento.client.IceCandidate;
+import org.kurento.client.WebRtcEndpoint;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -53,7 +57,55 @@ public class SignalingMessageService {
         return objectMapper.writeValueAsString(json);
     }
 
-        /*
+    /*
+    SdpAnswer 생성 메서드
+    - 정보를 바탕으로 Sdp Answer 생성 후 반환
+    - 혹시 몰라 front를 위해 sender도 추가
+     */
+    public String makeSdpAnswerMessage(String sdpAnswer, String sender) throws JsonProcessingException {
+        Map<String, String> json = new HashMap<>();
+        json.put("userId", sender);
+        json.put("SDP_ANSWER", sdpAnswer);
+        json.put("messageType", "SDP_ANSWER");
+
+        return objectMapper.writeValueAsString(json);
+    }
+
+    /*
+    Receiver Sdp Answer 생성을 위해 오버로딩
+     */
+    public String makeSdpAnswerMessage(String sdpAnswer, String sender, String receiver) throws JsonProcessingException {
+        Map<String, String> json = new HashMap<>();
+        //receiver의 요청인 경우 메세지 타입 RECEIVER_SDP_ANSWER
+        json.put("messageType", "RECEIVER_SDP_ANSWER");
+        json.put("userId", sender);
+        //ReceiverId도 추가
+        json.put("receiverId", receiver);
+        json.put("SDP_ANSWER", sdpAnswer);
+
+        return objectMapper.writeValueAsString(json);
+    }
+
+    /*
+    Ice candidate 메세지 생성 메서드
+    - 정보를 바탕으로 Ice candidate 메세지 생성 후 반환
+     */
+    public String makeIceCandidateMessage(IceCandidate iceCandidate, ChatMessage chatMessage) throws JsonProcessingException {
+        Map<String, Object> json = new HashMap<>();
+        json.put("messageType", "ICE_CANDIDATE");
+        json.put("userId", chatMessage.getUserId());
+        json.put("receiverId", chatMessage.getReceiverId());
+        log.info("makeIceCandidateMessage : userId {}, receiver Id {}", chatMessage.getUserId(), chatMessage.getReceiverId());
+        IceCandidatePayload iceCandidatePayload =
+                new IceCandidatePayload(iceCandidate.getCandidate(), iceCandidate.getSdpMid(), iceCandidate.getSdpMLineIndex());
+        json.put("candidate", iceCandidatePayload);
+
+        return objectMapper.writeValueAsString(json);
+    }
+
+
+
+    /*
     요청 세션에게 messageType 재전송
     - front 처리를 위해 요청 세션에게 messageType을 재전송
     - 방 생성(CREATE)시, roomName도 함께 넣어서 전송

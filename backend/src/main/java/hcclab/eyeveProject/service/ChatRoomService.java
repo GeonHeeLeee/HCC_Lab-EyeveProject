@@ -107,7 +107,6 @@ public class ChatRoomService {
         String roomName = chatMessage.getRoomName();
         String senderId = chatMessage.getUserId();
         String receiverId = chatMessage.getReceiverId();
-        log.info("ChatMessage : " + chatMessage.toString());
         switch(chatMessage.getMessageType()){
             case CREATE:
                 String createdRoomName = createRoom(chatMessage, session);

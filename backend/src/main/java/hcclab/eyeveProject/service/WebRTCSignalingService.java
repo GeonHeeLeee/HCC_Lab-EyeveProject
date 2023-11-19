@@ -7,6 +7,7 @@ import hcclab.eyeveProject.domain.ChatRoomMap;
 import hcclab.eyeveProject.domain.IceCandidatePayload;
 import hcclab.eyeveProject.domain.UserSession;
 import hcclab.eyeveProject.entity.Rooms;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.*;
 import org.springframework.stereotype.Service;
@@ -19,10 +20,12 @@ import java.util.Map;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class WebRTCSignalingService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ChatRoomMap chatRoomMap = ChatRoomMap.getInstance();
+    private final SignalingMessageService signalingMessageService;
     private final Map<String, Rooms> RoomList = chatRoomMap.getRoomList();
 
 
@@ -41,7 +44,7 @@ public class WebRTCSignalingService {
         String sender = message.getUserId();
         //sdp answer 생성 후 다시 클라이언트에게 보내기
         String sdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
-        String jsonSdpAnswer = makeSdpAnswerMessage(sdpAnswer, sender);
+        String jsonSdpAnswer = signalingMessageService.makeSdpAnswerMessage(sdpAnswer, sender);
 
 
         webRtcEndpoint.gatherCandidates(); //ice 후보자 수집 - 이 부분이 잘 이해가 가지 않음
@@ -63,60 +66,11 @@ public class WebRTCSignalingService {
         log.info("processReceiverSdpOffer : rtcep - {}",receiverEndpoint);
         String sdpAnswer = receiverEndpoint.processOffer(sdpOffer);
         //Receiver Sdp Answer 메세지 생성
-        String jsonSdpAnswer = makeSdpAnswerMessage(sdpAnswer, senderId, receiverId);
+        String jsonSdpAnswer = signalingMessageService.makeSdpAnswerMessage(sdpAnswer, senderId, receiverId);
 
         receiverEndpoint.gatherCandidates();
         senderSession.getWebSocketSession().sendMessage(new TextMessage(jsonSdpAnswer));
     }
-
-
-    /*
-    SdpAnswer 생성 메서드
-    - 정보를 바탕으로 Sdp Answer 생성 후 반환
-    - 혹시 몰라 front를 위해 sender도 추가
-     */
-    private String makeSdpAnswerMessage(String sdpAnswer, String sender) throws JsonProcessingException {
-        Map<String, String> json = new HashMap<>();
-        json.put("userId", sender);
-        json.put("SDP_ANSWER", sdpAnswer);
-        json.put("messageType", "SDP_ANSWER");
-
-        return objectMapper.writeValueAsString(json);
-    }
-
-    /*
-    Receiver Sdp Answer 생성을 위해 오버로딩
-     */
-    private String makeSdpAnswerMessage(String sdpAnswer, String sender, String receiver) throws JsonProcessingException {
-        Map<String, String> json = new HashMap<>();
-        //receiver의 요청인 경우 메세지 타입 RECEIVER_SDP_ANSWER
-        json.put("messageType", "RECEIVER_SDP_ANSWER");
-        json.put("userId", sender);
-        //ReceiverId도 추가
-        json.put("receiverId", receiver);
-        json.put("SDP_ANSWER", sdpAnswer);
-        
-        return objectMapper.writeValueAsString(json);
-    }
-
-    /*
-    Ice candidate 메세지 생성 메서드
-    - 정보를 바탕으로 Ice candidate 메세지 생성 후 반환
-     */
-    private String makeIceCandidateMessage(IceCandidate iceCandidate, ChatMessage chatMessage) throws JsonProcessingException {
-        Map<String, Object> json = new HashMap<>();
-        json.put("messageType", "ICE_CANDIDATE");
-        json.put("userId", chatMessage.getUserId());
-        json.put("receiverId", chatMessage.getReceiverId());
-        log.info("makeIceCandidateMessage : userId {}, receiver Id {}", chatMessage.getUserId(), chatMessage.getReceiverId());
-        IceCandidatePayload iceCandidatePayload =
-                new IceCandidatePayload(iceCandidate.getCandidate(), iceCandidate.getSdpMid(), iceCandidate.getSdpMLineIndex());
-        json.put("candidate", iceCandidatePayload);
-
-        return objectMapper.writeValueAsString(json);
-    }
-
-
 
     /*
     사용자로부터 받은 iceCandidate 메세지 처리
@@ -177,7 +131,7 @@ public class WebRTCSignalingService {
         webRtcEndpoint.addIceCandidateFoundListener(event -> {
             try {
                 IceCandidate iceCandidate = event.getCandidate();
-                String jsonMessage = makeIceCandidateMessage(iceCandidate, chatMessage);
+                String jsonMessage = signalingMessageService.makeIceCandidateMessage(iceCandidate, chatMessage);
                 synchronized (userSession.getWebSocketSession()) {
                     userSession.getWebSocketSession().sendMessage(new TextMessage(jsonMessage));
                     log.info("sender:{}, receiver:{}의 IceCandidate 전송 성공",chatMessage.getUserId(), chatMessage.getReceiverId());
