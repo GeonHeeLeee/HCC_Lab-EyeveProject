@@ -3,9 +3,14 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { WebRTCUser } from './rtc.type';
 
 import Video from '../../components/meetingRoom/video/video';
-import { getSocket, initSocket } from '../../services/socket';
+import { getSocket, initSocket, closeSocket } from '../../services/socket';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/types/redux.type';
+
+import FileShare from '../../components/meetingRoom/fileShare/FileShare.component';
+
+import styles from '../../styles/meetingRoom.module.css';
+import { useNavigate } from 'react-router-dom';
 
 const pc_config = {
   iceServers: [
@@ -40,6 +45,35 @@ const UserVideo = () => {
   const localVideoRef = useRef<HTMLVideoElement>(null); // 자신의 MediaStream 출력할 video 태그의 ref
 
   const [users, setUsers] = useState<Array<WebRTCUser>>([]);
+
+  const navigate = useNavigate();
+
+  const closeReiceivePC = useCallback((userId: string) => {
+    if (!receivePCsRef.current[userId]) return;
+    receivePCsRef.current[userId].close();
+    delete receivePCsRef.current[userId];
+  }, []);
+
+  const leaveRoom = () => {
+    console.log('leave room');
+
+    socketRef.current?.send(
+      JSON.stringify({
+        messageType: 'LEAVE',
+        roomName: loginUser.roomName,
+        userId: loginUser.userId,
+      })
+    );
+
+    if (socketRef.current) {
+      closeSocket();
+    }
+    if (sendPCRef.current) {
+      sendPCRef.current.close();
+    }
+    users.forEach((user) => closeReiceivePC(user.userId));
+    navigate('/mypage');
+  };
 
   // 원격 Peer의 stream 받아오기 위한 pc 객체에 대한 Offer 생성 후 서버에 전송
   const createReceiverOffer = useCallback(
@@ -319,6 +353,15 @@ const UserVideo = () => {
             })(data);
             break;
 
+          // 유저가 방에서 나갔을 때, 다른 유저들에게 나간 유저에 대한 userId 를 전달받아 PeerConnection 종료
+          case 'LEAVE':
+            console.log('user exit');
+            closeReiceivePC(data.userId);
+            setUsers((oldUsers) =>
+              oldUsers.filter((user) => user.userId !== data.userId)
+            );
+            break;
+
           // 새로운 유저가 들어왔을 때, 방에 있는 유저들이 새로운 유저에 대한 PeerConnection 생성
           case 'USER_ENTER':
             createReceivePC(data.userId);
@@ -350,12 +393,17 @@ const UserVideo = () => {
         }
       };
       return () => {
+        if (socketRef.current) {
+          closeSocket();
+        }
         if (sendPCRef.current) {
           sendPCRef.current.close();
         }
+        users.forEach((user) => closeReiceivePC(user.userId));
       };
     }
   }, [
+    closeReiceivePC,
     getLocalStream,
     createSenderOffer,
     createSenderPeerConnection,
@@ -363,26 +411,41 @@ const UserVideo = () => {
   ]);
 
   return (
-    <div>
-      <video
-        style={{
-          width: 240,
-          height: 240,
-          margin: 5,
-          backgroundColor: 'black',
-        }}
-        muted
-        ref={localVideoRef}
-        autoPlay
-      />
+    <main>
+      <div>
+        <div>
+          <FileShare />
+        </div>
+        <div className={styles.videoContainer}>
+          <div className={styles.localVideo}>
+            <video
+              style={{
+                width: 240,
+                height: 240,
+                backgroundColor: 'black',
+              }}
+              muted
+              ref={localVideoRef}
+              autoPlay
+            />
+          </div>
 
-      {users.map(
-        (user, index) => (
-          console.log(user.stream),
-          (<Video videoKey={index} stream={user.stream} />)
-        )
-      )}
-    </div>
+          <div className={styles.receiverVideo}>
+            {users.map(
+              (user, index) => (
+                console.log(user.stream),
+                (<Video videoKey={index} stream={user.stream} />)
+              )
+            )}
+          </div>
+        </div>
+        <div>
+          {/* 오른쪽 여러 상태 창 */}
+          <button onClick={leaveRoom}>방 나가기</button>
+        </div>
+      </div>
+      <div>{/* 하단 바 */}</div>
+    </main>
   );
 };
 

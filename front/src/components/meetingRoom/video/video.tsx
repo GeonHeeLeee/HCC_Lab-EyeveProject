@@ -2,11 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import Styled from 'styled-components';
 
 const Container = Styled.div`
-    position: relative;
-    display: inline-block;
     width: 240px;
     height: 240px;
-    margin: 5px;
 `;
 
 const VideoContainer = Styled.video`

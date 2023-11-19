@@ -1,0 +1,17 @@
+/* .usersVideo {
+  display: flex;
+  flex-direction: column;
+} */
+
+.localVideo {
+  display: inline-block;
+}
+
+/* .receiverVideo {
+  position: absolute;
+  right: 0;
+} */
+
+/* .videoContainer {
+  display: inline-block;
+} */

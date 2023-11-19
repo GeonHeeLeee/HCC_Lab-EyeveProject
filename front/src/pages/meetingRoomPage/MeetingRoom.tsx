@@ -3,8 +3,11 @@
 import Timeline from '../../components/meetingRoom/timeline/Timeline.component';
 import Chat from '../../components/meetingRoom/chat/Chat.componenet';
 import FileShare from '../../components/meetingRoom/fileShare/FileShare.component';
+import styles from '../../styles/mypage.module.css';
 
 import UsersVideo from './UserVideo';
+
+import '../../styles/meetingRoom.module.css';
 
 const MeetingRoom = () => {
   // const {socket: mySocket} = useSelector((state: RootState) => state.socket);
@@ -13,10 +16,10 @@ const MeetingRoom = () => {
     <main>
       <section>
         <section>{/* TODO: 공유된 파일 보여주기 영역 */}</section>
-        <section>
+        <section className={styles.usersVideo}>
           {/* TODO: Video 영역 */}
-          <UsersVideo></UsersVideo>
-          <video></video>
+          <UsersVideo />
+          {/* <video></video> */}
         </section>
         <Timeline />
       </section>
