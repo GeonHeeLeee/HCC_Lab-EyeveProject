@@ -42,6 +42,8 @@ public class WebRTCSignalingService {
         //sdp answer 생성 후 다시 클라이언트에게 보내기
         String sdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
         String jsonSdpAnswer = makeSdpAnswerMessage(sdpAnswer, sender);
+
+
         webRtcEndpoint.gatherCandidates(); //ice 후보자 수집 - 이 부분이 잘 이해가 가지 않음
 
 
@@ -125,9 +127,11 @@ public class WebRTCSignalingService {
         IceCandidate iceCandidate =
                 new IceCandidate(payload.getCandidate(), payload.getSdpMid(), payload.getSdpMLineIndex());
         log.info("processIceCandidate 함수 호출");
+        //사용자 본인을 등록하는 경우
         if(receiverWebRtcEndpoint == null) {
             webRtcEndpoint.addIceCandidate(iceCandidate);
         }
+        //새로 들어오거나 기존에 있던 사람이 방에 있는 다른 사람을 등록하는 경우
         else{
             receiverWebRtcEndpoint.addIceCandidate(iceCandidate);
         }
@@ -144,22 +148,11 @@ public class WebRTCSignalingService {
         log.info(String.format("%s의 webRTCEp 생성", userSession.getUser().getUserId()));
     }
 
-    /*
-    방에 있는 사람들과 WebRTCEndpoint 연결
-    - 자신을 제외한 방에 있는 사람들과 WebRTCEndpoint 연결하기
-     */
-//    public void connectWebRTCEp(Rooms roomJoined, UserSession userSession) {
-//        for (UserSession otherUserSession : roomJoined.getUserInRoomList().values()) {
-//            if (otherUserSession != userSession) {
-//                otherUserSession.getWebRtcEndpoint().connect(userSession.getWebRtcEndpoint());
-//                userSession.getWebRtcEndpoint().connect(otherUserSession.getWebRtcEndpoint());
-//
-//                log.info(String.format("%s와 %s 간 WebRTCEp 연결", otherUserSession.getUser().getUserId(),
-//                        userSession.getUser().getUserId()));
-//            }
-//        }
-//    }
 
+    /*
+    DownStream Endpoint 생성 메서드
+    - 방에 있던 기존 사람이나 새로 들어온 사람이 다른 사람들의 Endpoint(downStream) 생성
+     */
     public void createDownStreamEndpoint(Rooms roomJoined, UserSession receiverSession, ChatMessage chatMessage, UserSession senderSession) {
         WebRtcEndpoint receiverDownStream = new WebRtcEndpoint.Builder(roomJoined.getPipeline()).build();
         String receiverId = receiverSession.getUser().getUserId();

@@ -15,12 +15,12 @@ import org.kurento.client.KurentoClient;
 import org.kurento.client.WebRtcEndpoint;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.tags.form.OptionsTag;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -96,7 +96,6 @@ public class ChatRoomService {
         String roomName = chatMessage.getRoomName();
 
         User findUser = userRepository.findById(userId);
-        //Rooms roomJoined = roomRepository.findRoomByName(roomName);
         Rooms roomJoined = chatRoomMap.getRoomFromRoomList(roomName);
 
         if(roomJoined != null) {
@@ -106,9 +105,6 @@ public class ChatRoomService {
             //WebRTCEndpoint 생성
             webRTCSignalingService.createWebRTCEp(roomJoined, newUserSession, chatMessage);
             roomJoined.addUserAndSession(userId, newUserSession);
-
-            //방에 있는 사용자들과 WebRTCEndpoint 연결하기 - 일단 보류
-            //webRTCSignalingService.connectWebRTCEp(roomJoined, newUserSession);
 
             log.info("방 참가 요청 - userId : " + findUser.getUserId());
             log.info("방 참가 요청 - roomName : " + roomJoined.getRoomName());
@@ -199,7 +195,6 @@ public class ChatRoomService {
                 break;
 
             case SDP_OFFER :
-
                 //메세지 받을 때 방 이름도 같이 받아야 함 또한 userId도 받아야함
                 log.info("MessageType : SDP_OFFER");
                 log.info("sdpOffer Sender : " + senderId);
@@ -234,25 +229,10 @@ public class ChatRoomService {
                 WebRtcEndpoint receiverEndpoint = senderUserSession.getDownStreams().get(receiverId);
                 log.info("RECEIVER_SDP_OFFER : {}의 DownStream - {}",senderUserSession.getUser().getUserId(),senderUserSession.getDownStreams().keySet());
                 webRTCSignalingService.processReceiverSdpOffer(senderUserSession,receiverEndpoint, chatMessage);
-
                 break;
+            case LEAVE:
 
-//            case RECEIVER_ICE_CANDIDATE:
-//                log.info("MessageType : RECEIVER_ICE_CANDIDATE");
-//                Rooms SenderIceRoom = RoomList.get(roomName);
-//                UserSession senderSession = SenderIceRoom.getUserInRoomList().get(senderId);
-//
-//                WebRtcEndpoint receiveEndpoint = senderSession.getDownStreams().get(receiverId);
-//
-//                webRTCSignalingService.processIceCandidate(receiveEndpoint, chatMessage);
-//                break;
 
-            /*
-            이후 사람들과 연결을 해야함. 사용자가 서버로 보내는 하나의 stream을 mediapipeline과 연결하고
-            나머지 방에 있는 사람들과 webrtcendpoint.connect(receiver)을 연결을 모두 해야함.
-            그리고 새로운 사람과 연결되었을때나 연결이 끊어졌을때 업데이트하는 로직도 작성해야함.
-            상대방이 나갔을때는 front에 나갔음을 websocket으로 알려주면 됨.
-             */
         }
     }
 
@@ -263,34 +243,26 @@ public class ChatRoomService {
      */
     @Transactional
     public void removeUserFromRoom(WebSocketSession session) {
-        RoomList.values().stream()
-                .filter(room -> room.getUserInRoomList().values().stream()
-                        .map(UserSession::getWebSocketSession)
-                        .collect(Collectors.toList())
-                        .contains(session))
-                .forEach(room -> room.getUserInRoomList().entrySet().removeIf(entry -> {
-                    if (entry.getValue().getWebSocketSession().equals(session)) {
-                        User user = userRepository.findById(entry.getKey());
+        Rooms foundRoom = getRoomByWebSocketSession(session);
+        Iterator<Map.Entry<String, UserSession>> iter = foundRoom.getUserInRoomList().entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<String, UserSession> entry = iter.next();
+            if (entry.getValue().getWebSocketSession().equals(session)) {
+                User user = userRepository.findById(entry.getKey());
 
-                        log.info("방 나가기 - 방에 남아 있는 인원 : " + entry.getKey());
-                        log.info("방 나가기 - userId : " + user.getUserId());
-                        log.info("방 나가기 - roomName : " + room.getRoomName());
+                log.info("방 나가기 - 방에 남아 있는 인원 : " + entry.getKey());
+                log.info("방 나가기 - userId : " + user.getUserId());
+                log.info("방 나가기 - roomName : " + foundRoom.getRoomName());
 
-                        //다른 사람들의 downStream도 Release 후 삭제
-//                        user.getRoom().getUserInRoomList().values().forEach(otherUser ->{
-//                            if(user.getUserId() != otherUser.getUser().getUserId()){
-//                                WebRtcEndpoint leftEndpoint = otherUser.getDownStreams().get(user.getUserId());
-//                                leftEndpoint.release();
-//                                log.info("방 나가기 - {}의 {} Ep Release", otherUser,user.getUserId());
-//                                otherUser.getDownStreams().remove(user.getUserId());
-//                            }
-//                        }
-//                        );
-                        user.setRoom(null);
-                        return true;
-                    }
-                    return false;
-                }));
+                // 다른 사람들의 downStream도 Release 후 삭제
+                releaseUsersDownStream(user, foundRoom);
+
+                user.setRoom(null);
+                iter.remove();
+            }
+        }
+
+
     }
 
 
@@ -318,6 +290,54 @@ public class ChatRoomService {
         json.put("userId",enteredUserId);
         return objectMapper.writeValueAsString(json);
     }
+
+    /*
+    WebSocketSession으로 해당 유저가 있는 방 찾기
+    - 현재 findAny()로 유저가 존재하는 방 하나만 찾기
+    - 즉, 한 유저가 여러개의 방에 존재할수는 없음
+     */
+    public Rooms getRoomByWebSocketSession(WebSocketSession webSocketSession) {
+        Rooms foundRoom = RoomList.values().stream()
+                .filter(room -> room.getUserInRoomList().values().stream()
+                        .map(UserSession::getWebSocketSession)
+                        .collect(Collectors.toList())
+                        .contains(webSocketSession))
+                .findAny()
+                .orElseThrow(() -> new NoSuchElementException("getRoomByWebSocketSession: 유저가 있는 방 없음"));;
+        return foundRoom;
+    }
+
+    /*
+    WebRTCEndpoint Release 시키기
+    - 해당 유저의 DownStream과 다른 유저들의 DownStream에서 해당 유저 release
+     */
+    public void releaseUsersDownStream(User leftUser, Rooms foundRoom) {
+        for (UserSession user : foundRoom.getUserInRoomList().values()) {
+            //기존에 방에 있던 사람들의 DownStream에서 해당 유저 release
+            if (leftUser.getUserId() != user.getUser().getUserId()) {
+                WebRtcEndpoint leftEndpoint = user.getDownStreams().get(leftUser.getUserId());
+                if (leftEndpoint != null) {
+                    leftEndpoint.release();
+                    log.info("방 나가기 - {}의 {} Ep Release", user.getUser().getUserId(), leftUser.getUserId());
+                    user.getDownStreams().remove(leftUser.getUserId());
+                }
+            }
+            //해당 유저의 DownStream들 release
+            else {
+                Iterator<Map.Entry<String, WebRtcEndpoint>> iterator = user.getDownStreams().entrySet().iterator();
+                while (iterator.hasNext()) {
+                    Map.Entry<String, WebRtcEndpoint> entry = iterator.next();
+                    entry.getValue().release();
+                    log.info("방 나가기 - {}의 {} Ep Release", leftUser.getUserId(), entry.getKey());
+                    iterator.remove();
+                }
+                user.getWebRtcEndpoint().release();
+                log.info("방 나가기 - {}의 Ep Release {}", user.getUser().getUserId());
+            }
+        }
+    }
+
+
 
 
 }
