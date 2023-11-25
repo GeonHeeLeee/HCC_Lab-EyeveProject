@@ -1,17 +1,54 @@
-/* .usersVideo {
-  display: flex;
-  flex-direction: column;
-} */
+html,
+body {
+  overflow: hidden;
+  height: 100%;
+}
+
+main {
+  height: 90vh;
+}
 
 .localVideo {
   display: inline-block;
+  margin: 0;
 }
 
-/* .receiverVideo {
-  position: absolute;
-  right: 0;
+/* .localVideoContainer {
 } */
 
-/* .videoContainer {
-  display: inline-block;
-} */
+.screenSharing {
+  background-color: black;
+  /* width: 50em; */
+  /* height: 40em; */
+  /* width: 70%; */
+  height: 100%;
+  flex-grow: 1;
+}
+
+.videosContainer {
+  margin: 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.meetingroomDiv {
+  display: flex;
+  flex-direction: row;
+  /* flex-direction: column;
+  justify-content: center;
+  align-items: center; */
+  height: 100%;
+}
+
+.info {
+  margin: 0;
+  width: 12em;
+  height: 100vh;
+
+  background-color: bisque;
+}
+
+.timeLine {
+  height: 4.6em;
+  background-color: aqua;
+}

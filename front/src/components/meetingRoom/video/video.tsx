@@ -2,13 +2,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import Styled from 'styled-components';
 
 const Container = Styled.div`
-    width: 240px;
-    height: 240px;
+    margin: 0;
+    width: 12em;
+    height: 10em;
 `;
 
 const VideoContainer = Styled.video`
-    width: 240px;
-    height: 240px;
+    margin: 0;
+    width: 12em;
+    height: 10em;
     background-color: black;
 `;
 

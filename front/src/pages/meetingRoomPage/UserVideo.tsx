@@ -64,14 +64,14 @@ const UserVideo = () => {
         userId: loginUser.userId,
       })
     );
-
-    if (socketRef.current) {
-      closeSocket();
-    }
-    if (sendPCRef.current) {
-      sendPCRef.current.close();
-    }
-    users.forEach((user) => closeReiceivePC(user.userId));
+    // useEffect에서 unmount 시 동작
+    // if (socketRef.current) {
+    //   closeSocket();
+    // }
+    // if (sendPCRef.current) {
+    //   sendPCRef.current.close();
+    // }
+    // users.forEach((user) => closeReiceivePC(user.userId));
     navigate('/mypage');
   };
 
@@ -400,6 +400,10 @@ const UserVideo = () => {
           sendPCRef.current.close();
         }
         users.forEach((user) => closeReiceivePC(user.userId));
+
+        if (localStreamRef.current) {
+          localStreamRef.current.getTracks().forEach((track) => track.stop());
+        }
       };
     }
   }, [
@@ -410,41 +414,77 @@ const UserVideo = () => {
     createReceivePC,
   ]);
 
+  // return (
+  // <main>
+  //   <div>
+  //     <div>
+  //       <FileShare />
+  //     </div>
+  //     <div className={styles.videoContainer}>
+  //       <div className={styles.localVideo}>
+  //         <video
+  //           style={{
+  //             width: 240,
+  //             height: 240,
+  //             backgroundColor: 'black',
+  //           }}
+  //           muted
+  //           ref={localVideoRef}
+  //           autoPlay
+  //         />
+  //       </div>
+
+  //       <div className={styles.receiverVideo}>
+  //         {users.map(
+  //           (user, index) => (
+  //             console.log(user.stream),
+  //             (<Video videoKey={index} stream={user.stream} />)
+  //           )
+  //         )}
+  //       </div>
+  //     </div>
+  //     <div>
+  //       {/* 오른쪽 여러 상태 창 */}
+  //       <button onClick={leaveRoom}>방 나가기</button>
+  //     </div>
+  //   </div>
+  //   <div>{/* 하단 바 */}</div>
+  // </main>
+  // );
+
   return (
     <main>
-      <div>
-        <div>
-          <FileShare />
-        </div>
-        <div className={styles.videoContainer}>
+      <div className={styles.meetingroomDiv}>
+        <div className={styles.screenSharing}>{/* 화면 공유 화면 */}</div>
+        <div className={styles.videosContainer}>
           <div className={styles.localVideo}>
-            <video
-              style={{
-                width: 240,
-                height: 240,
-                backgroundColor: 'black',
-              }}
-              muted
-              ref={localVideoRef}
-              autoPlay
-            />
+            <div className={styles.localVideo}>
+              <video
+                style={{
+                  width: 12 + 'em',
+                  height: 10 + 'em',
+                  backgroundColor: 'black',
+                  margin: 0,
+                }}
+                muted
+                ref={localVideoRef}
+                autoPlay
+              />
+            </div>
           </div>
 
-          <div className={styles.receiverVideo}>
-            {users.map(
-              (user, index) => (
-                console.log(user.stream),
-                (<Video videoKey={index} stream={user.stream} />)
-              )
-            )}
-          </div>
+          {users.map(
+            (user, index) => (
+              console.log(user.stream),
+              (<Video videoKey={index} stream={user.stream} />)
+            )
+          )}
         </div>
-        <div>
-          {/* 오른쪽 여러 상태 창 */}
-          <button onClick={leaveRoom}>방 나가기</button>
+        <div className={styles.info}>
+          <div>{/* 채팅 */}</div>
         </div>
       </div>
-      <div>{/* 하단 바 */}</div>
+      <div className={styles.timeLine}>{/* 타임라인 */}</div>
     </main>
   );
 };
