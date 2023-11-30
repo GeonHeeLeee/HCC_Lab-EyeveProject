@@ -1,8 +1,0 @@
-.btn-outline-secondary:hover,
-.btn-outline-secondary:focus,
-.btn-outline-secondary:active,
-.btn-outline-secondary.active {
-  color: #fff;
-  background-color: #00b3db;
-  border-color: #285e8e; /*set the color you want here*/
-}

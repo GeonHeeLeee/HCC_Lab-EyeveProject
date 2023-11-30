@@ -80,7 +80,6 @@ function MyPage() {
 
     const socket = getSocket();
 
-    console.log(socket);
     if (socket) {
       socket.onopen = function () {
         socket.send(
@@ -107,19 +106,17 @@ function MyPage() {
         }
       };
 
-      let i = 0;
+      // let i = 0;
       socket.onerror = (error) => {
         console.log(error);
-        if (i == 2) {
-          socket.close();
-        }
-        i++;
+        // if (i == 2) {
+        socket.close();
+        // }
+        // i++;
       };
 
       socket.onclose = function (event) {
         console.log(event);
-        console.log('123123');
-        // dispatch(clearSocket());
       };
     }
   };

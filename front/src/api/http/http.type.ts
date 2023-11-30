@@ -7,7 +7,7 @@ export type SignUpData = {
   userId: string;
   userPassword: string;
   userName: string;
-  userType: 'PROFESSOR' | 'STUDENT';
+  userType: 'PROFESSOR' | 'STUDENT' | undefined;
 };
 
 export type SignInRes = {

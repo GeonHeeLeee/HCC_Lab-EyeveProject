@@ -26,7 +26,7 @@ function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const handleLoginSubmit = (e: React.MouseEvent) => {
+  const handleLoginSubmit = async (e: React.MouseEvent) => {
     e.preventDefault();
 
     if (!loginInfo.userId) {
@@ -60,7 +60,7 @@ function Login() {
     <div className={styles.loginBox}>
       <div className={styles.loginWrapper}>
         <h2>Eyeve</h2>
-        <form className={styles.loginForm} method='post' action=''>
+        <form className={styles.loginForm} method='post'>
           <input
             type='text'
             name='userId'

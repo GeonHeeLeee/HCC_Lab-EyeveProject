@@ -12,6 +12,8 @@ import FileShare from '../../components/meetingRoom/fileShare/FileShare.componen
 import styles from '../../styles/meetingRoom.module.css';
 import { useNavigate } from 'react-router-dom';
 
+import Button from '../../components/common/Button';
+
 const pc_config = {
   iceServers: [
     // {
@@ -247,7 +249,7 @@ const UserVideo = () => {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: {
-          width: 240,
+          width: 300,
           height: 240,
         },
       });
@@ -454,25 +456,9 @@ const UserVideo = () => {
 
   return (
     <main>
-      <div className={styles.meetingroomDiv}>
-        <div className={styles.screenSharing}>{/* 화면 공유 화면 */}</div>
-        <div className={styles.videosContainer}>
-          <div className={styles.localVideo}>
-            <div className={styles.localVideo}>
-              <video
-                style={{
-                  width: 12 + 'em',
-                  height: 10 + 'em',
-                  backgroundColor: 'black',
-                  margin: 0,
-                }}
-                muted
-                ref={localVideoRef}
-                autoPlay
-              />
-            </div>
-          </div>
-
+      <div className={styles['meetingroom-div']}>
+        <div className={styles['screen-sharing']}>{/* 화면 공유 화면 */}</div>
+        <div className={styles['videos-container']}>
           {users.map(
             (user, index) => (
               console.log(user.stream),
@@ -480,11 +466,20 @@ const UserVideo = () => {
             )
           )}
         </div>
-        <div className={styles.info}>
+        <div className={styles['info']}>
+          <div className={styles['professor-video-container']}>
+            <video
+              className={styles['professor-video']}
+              muted
+              ref={localVideoRef}
+              autoPlay
+            />
+          </div>
+          <Button onClick={leaveRoom} children={'방 나가기 '} />
           <div>{/* 채팅 */}</div>
         </div>
       </div>
-      <div className={styles.timeLine}>{/* 타임라인 */}</div>
+      <div className={styles['timeline']}>{/* 타임라인 */}</div>
     </main>
   );
 };

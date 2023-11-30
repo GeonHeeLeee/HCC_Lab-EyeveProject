@@ -7,6 +7,7 @@ import MyPage from './pages/myPage/MyPage';
 import MeetingRoom from './pages/meetingRoomPage/MeetingRoom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import UserVideo from './pages/meetingRoomPage/UserVideo';
+import DashBoardContainer from './pages/dashboard/DashboardContainer';
 
 const queryClient = new QueryClient();
 
@@ -14,9 +15,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Routes>
-        <Route path='/' element={<LoginPage />}></Route>
-        <Route path='/mypage' element={<MyPage></MyPage>}></Route>
+        <Route path='/' element={<LoginPage />} />
+        <Route path='/mypage' element={<MyPage />} />
         <Route path='/meeting' element={<UserVideo />} />
+        <Route path='/dashboard' element={<DashBoardContainer />} />
       </Routes>
     </QueryClientProvider>
   );

@@ -2,16 +2,18 @@ import React, { useEffect, useRef, useState } from 'react';
 import Styled from 'styled-components';
 
 const Container = Styled.div`
-    margin: 0;
-    width: 12em;
-    height: 10em;
+
+    width: 100%;
+    height: 16.67%;
+    border-radius: 1em;
 `;
 
 const VideoContainer = Styled.video`
-    margin: 0;
-    width: 12em;
-    height: 10em;
+
+    width: 100%;
+    height: 100%;
     background-color: black;
+    border-radius: 5px;
 `;
 
 interface Props {

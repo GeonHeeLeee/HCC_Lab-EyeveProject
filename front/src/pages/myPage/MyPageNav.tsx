@@ -34,14 +34,19 @@ function MyPageNav({ handleCreateMeeting }: propsType) {
           alt='logo'
           className={styles.logo}
         />
-        <a href='#' className={`${styles.navbarBrand} text-dark`}>
+        <a href={'/mypage'} className={`${styles.navbarBrand} text-dark`}>
           Eyeve
         </a>
         <div className='collapse navbar-collapse'>
           <ul className='navbar-nav' style={{ marginRight: 'auto' }}></ul>
           <ul className='navbar-nav' style={{ marginRight: '0' }}>
             <li className={`${styles.navItem} sign-in ${styles.displayCenter}`}>
-              <a href='#' className='nav-link'>
+              <a
+                href=''
+                className='nav-link'
+                onClick={() => {
+                  navigate('/dashboard');
+                }}>
                 대시보드
               </a>
             </li>
