@@ -1,15 +1,9 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/types/redux.type';
-import axios from 'axios';
 import { hide } from '../../store/modules/showSignupSlice';
-import API from '../../services/api';
-
 import styles from '../../styles/login.module.css';
 import Button from '../../components/common/Button';
-
-// TODO: any 타입을 바꾸기
-// 회원가입 정보 서버로 전송
 
 type UserSignupData = {
   userId: string;
@@ -17,43 +11,6 @@ type UserSignupData = {
   userName: string;
   userType: 'STUDENT' | 'PROFESSOR' | undefined;
 };
-
-async function SendSignup(userSignupData: UserSignupData) {
-  //   const { networkInterface } = useSelector((state: RootState) => state.network);
-
-  //   networkInterface
-  //     .signUp(userSignupData)
-  //     .then((res) => {
-  //       console.log(res);
-
-  //       // if () {
-  //       //   return false;
-  //       // }
-  //       // return res.data;
-  //     })
-  //     .catch((error) => {
-  //       console.error(`Signup Error: ${error.message}`);
-  //       return false;
-  //     });
-
-  try {
-    const { data, status } = await axios.post(`${API}/users`, userSignupData);
-
-    if (status === 400) {
-      return false;
-    }
-
-    return data;
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.log('error message: ', error.message);
-      return false;
-    } else {
-      console.log('unexpected error: ', error);
-      return false;
-    }
-  }
-}
 
 const initialState: UserSignupData = {
   userName: '',
@@ -66,6 +23,8 @@ function Signup() {
   const dispatch = useDispatch();
 
   const [signupInfo, setSignupInfo] = useState(initialState);
+
+  const { networkInterface } = useSelector((state: RootState) => state.network);
 
   const handleSignupSubmit = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -80,18 +39,26 @@ function Signup() {
       return alert('권한을 체크하세요.');
     }
 
-    const data = SendSignup(signupInfo);
+    networkInterface
+      .signUp(signupInfo)
+      .then((res) => {
+        console.log(res);
 
-    data.then((res) => {
-      if (res === false) {
-        alert('회원가입 실패');
-      } else {
-        alert(
-          `반갑습니다. ${signupInfo.userName} 님\n회원가입이 완료되었습니다. `
-        );
-        dispatch(hide());
-      }
-    });
+        if (res.status === 400) {
+          return;
+        } else {
+          alert(
+            `반갑습니다. ${signupInfo.userName} 님\n회원가입이 완료되었습니다. `
+          );
+          dispatch(hide());
+        }
+      })
+      .catch((error) => {
+        if (error.response.status === 400) {
+          return alert('회원가입 실패');
+        }
+        console.log(error);
+      });
   };
 
   return (
@@ -170,7 +137,6 @@ function Signup() {
             />
             학생
           </label>
-          {/*<button type='submit' value='SignUp' onClick={handleSignupSubmit}>회원가입</button>*/}
           <input type='submit' value='SignUp' onClick={handleSignupSubmit} />
         </form>
       </div>

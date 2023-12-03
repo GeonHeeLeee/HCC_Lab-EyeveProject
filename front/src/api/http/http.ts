@@ -15,7 +15,7 @@ export class Http implements ICommunication {
 
   constructor() {
     const axiosConfig = {
-      // baseURL: 'https://c6eb-175-192-208-3.ngrok-free.app',
+      // baseURL: 'https://eea7-203-229-61-35.ngrok-free.app',
       baseURL: 'http://localhost:8081',
       withCredentials: true,
     };

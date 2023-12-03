@@ -42,34 +42,25 @@ function MyPage() {
 
   // Cookie에 존재하는 SESSIONID 확인
   useEffect(() => {
-    async function checkUserAuth() {
-      axios
-        .get(`${API}/auto-login`, {
-          withCredentials: true,
-        })
-        .then((res) => {
-          console.log(res);
-          if (res.status === 401) {
-            localStorage.removeItem('userName');
-            alert('접근 불가합니다.');
-            navigate('/');
-          } else if (res.status === 200) {
-            setRender(true);
-            localStorage.setItem('usernameName', res.data);
-            console.log('response status: 200');
-            return;
-          }
-        })
-        .catch((error) => {
+    networkInterface
+      .checkAuthentication()
+      .then((res) => {
+        if (res.status === 401) {
           localStorage.removeItem('userName');
           alert('접근 불가합니다.');
-          console.error(error);
           navigate('/');
+        } else if (res.status === 200) {
+          setRender(true);
           return;
-        });
-    }
-
-    checkUserAuth();
+        }
+      })
+      .catch((error) => {
+        localStorage.removeItem('userName');
+        alert('접근 불가합니다.');
+        console.error(error);
+        navigate('/');
+        return;
+      });
   }, []);
 
   const handleCreateMeeting = () => {
@@ -88,7 +79,6 @@ function MyPage() {
             messageType: 'CREATE',
           })
         );
-        console.log(socket);
 
         console.log('socket is send');
       };
@@ -106,13 +96,9 @@ function MyPage() {
         }
       };
 
-      // let i = 0;
       socket.onerror = (error) => {
         console.log(error);
-        // if (i == 2) {
         socket.close();
-        // }
-        // i++;
       };
 
       socket.onclose = function (event) {
@@ -123,8 +109,16 @@ function MyPage() {
 
   return (
     <>
-      <MyPageNav handleCreateMeeting={handleCreateMeeting}></MyPageNav>
-      <MypageMain handleCreateMeeting={handleCreateMeeting}></MypageMain>
+      {render ? (
+        <>
+          <MyPageNav handleCreateMeeting={handleCreateMeeting}></MyPageNav>
+          <MypageMain handleCreateMeeting={handleCreateMeeting}></MypageMain>
+        </>
+      ) : (
+        <></>
+      )}
+      {/* <MyPageNav handleCreateMeeting={handleCreateMeeting}></MyPageNav>
+      <MypageMain handleCreateMeeting={handleCreateMeeting}></MypageMain> */}
     </>
   );
 }

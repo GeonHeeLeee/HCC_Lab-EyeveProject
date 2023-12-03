@@ -57,16 +57,11 @@ function MypageMain({ handleCreateMeeting }: propsType) {
         }
       };
 
-      let i = 0;
       socket.onerror = (error) => {
         console.log(error);
-        if (i == 2) {
-          socket.close();
 
-          alert('미팅 참여에 실패하였습니다.');
-          // dispatch(clearSocket());
-        }
-        i++;
+        socket.close();
+        alert('미팅 참여에 실패하였습니다.');
       };
 
       socket.onclose = function (event) {

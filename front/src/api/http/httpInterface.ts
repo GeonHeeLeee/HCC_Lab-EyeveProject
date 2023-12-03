@@ -1,6 +1,6 @@
 import { ICommunication } from './http';
 import type { SignInData, SignInRes, SignUpData } from './http.type';
-import { Response } from 'http-proxy-middleware/dist/types';
+// import { Response } from 'http-proxy-middleware/dist/types';
 
 export class HttpInterface {
   constructor(private apiClient: ICommunication) {}
@@ -14,7 +14,7 @@ export class HttpInterface {
     return this.apiClient.post('/users/login', data);
   }
 
-  async signUp(data: SignUpData): Promise<Response> {
+  async signUp(data: SignUpData) {
     return this.apiClient.post('/users', data);
   }
 

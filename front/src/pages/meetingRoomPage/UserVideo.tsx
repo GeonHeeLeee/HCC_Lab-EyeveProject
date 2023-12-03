@@ -59,6 +59,12 @@ const UserVideo = () => {
   const leaveRoom = () => {
     console.log('leave room');
 
+    // if (localStreamRef.current) {
+    //   localStreamRef.current.getTracks().forEach(function (track) {
+    //     track.stop();
+    //   });
+    // }
+
     socketRef.current?.send(
       JSON.stringify({
         messageType: 'LEAVE',
@@ -264,6 +270,11 @@ const UserVideo = () => {
       console.log(`getUserMedia error: ${error}`);
     }
   }, [createSenderOffer, createSenderPeerConnection]);
+
+  // 브라우저 나갔을 때
+  window.onbeforeunload = () => {
+    leaveRoom();
+  };
 
   useEffect(() => {
     initSocket();
