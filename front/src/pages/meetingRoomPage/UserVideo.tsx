@@ -13,6 +13,9 @@ import styles from '../../styles/meetingRoom.module.css';
 import { useNavigate } from 'react-router-dom';
 
 import Button from '../../components/common/Button';
+import Chat from '../../components/meetingRoom/chat/Chat.componenet';
+import { useDispatch } from 'react-redux';
+import { leaveRoomAction } from '../../store/modules/loginUserSlice';
 
 const pc_config = {
   iceServers: [
@@ -39,6 +42,11 @@ const UserVideo = () => {
   const loginUser = useSelector((state: RootState) => state.loginUser);
 
   const socketRef = useRef<WebSocket | null>(); // 서버와 통신할 소켓
+  const socket = useSelector((state: RootState) => state.socket.socket);
+  console.log(socket);
+
+  socketRef.current = socket;
+
   const localStreamRef = useRef<MediaStream>();
 
   const sendPCRef = useRef<RTCPeerConnection>();
@@ -49,6 +57,7 @@ const UserVideo = () => {
   const [users, setUsers] = useState<Array<WebRTCUser>>([]);
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const closeReiceivePC = useCallback((userId: string) => {
     if (!receivePCsRef.current[userId]) return;
@@ -64,6 +73,7 @@ const UserVideo = () => {
     //     track.stop();
     //   });
     // }
+    dispatch(leaveRoomAction());
 
     socketRef.current?.send(
       JSON.stringify({
@@ -255,8 +265,8 @@ const UserVideo = () => {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: {
-          width: 300,
-          height: 240,
+          width: 280,
+          height: 180,
         },
       });
 
@@ -277,8 +287,7 @@ const UserVideo = () => {
   };
 
   useEffect(() => {
-    initSocket();
-    socketRef.current = getSocket();
+    console.log(socketRef.current);
 
     getLocalStream();
 
@@ -468,7 +477,9 @@ const UserVideo = () => {
   return (
     <main>
       <div className={styles['meetingroom-div']}>
-        <div className={styles['screen-sharing']}>{/* 화면 공유 화면 */}</div>
+        <div className={styles['screen-sharing']}>
+          <FileShare />
+        </div>
         <div className={styles['videos-container']}>
           {users.map(
             (user, index) => (
@@ -486,8 +497,13 @@ const UserVideo = () => {
               autoPlay
             />
           </div>
-          <Button onClick={leaveRoom} children={'방 나가기 '} />
-          <div>{/* 채팅 */}</div>
+          <div className={styles['learning-activity']}></div>
+          <div className={styles['alarm']}>
+            <Button onClick={leaveRoom} children={'방 나가기 '} />
+          </div>
+          <div className={styles['chat-container']}>
+            <Chat roomId={loginUser.roomName} userId={loginUser.userId} />
+          </div>
         </div>
       </div>
       <div className={styles['timeline']}>{/* 타임라인 */}</div>

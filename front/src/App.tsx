@@ -4,7 +4,6 @@ import { Route, Routes } from 'react-router-dom';
 import LoginPage from './pages/loginPage/LoginPage';
 
 import MyPage from './pages/myPage/MyPage';
-import MeetingRoom from './pages/meetingRoomPage/MeetingRoom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import UserVideo from './pages/meetingRoomPage/UserVideo';
 import DashBoardContainer from './pages/dashboard/DashboardContainer';

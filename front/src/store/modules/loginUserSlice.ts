@@ -34,10 +34,13 @@ export const loginUserSlice = createSlice({
       // state = { ...state, roomName: action.payload };
       state.roomName = action.payload;
     },
+    leaveRoomAction: (state) => {
+      state.roomName = '';
+    },
   },
 });
 
-export const { setLoginUser, sessionExpiration, enterRoom } =
+export const { setLoginUser, sessionExpiration, enterRoom, leaveRoomAction } =
   loginUserSlice.actions;
 
 export default loginUserSlice.reducer;

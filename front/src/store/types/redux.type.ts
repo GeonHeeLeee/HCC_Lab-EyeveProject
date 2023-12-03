@@ -17,7 +17,6 @@ export type ShowSignup = {
 // TODO: any 변경
 export type SocketState = {
   socket: WebSocket | null;
-  otherSockets: (WebSocket | string)[]; // socket id or socket instance?
 };
 
 export type Network = {

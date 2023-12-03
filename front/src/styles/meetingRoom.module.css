@@ -44,8 +44,11 @@ main {
 
 .professor-video-container {
   width: 100%;
+  margin: 0;
 }
+
 .professor-video {
+  margin: 0;
   width: 100%;
   height: 100%;
   border-radius: 5px;
@@ -62,4 +65,23 @@ main {
 .timeline {
   height: 4.6em;
   background-color: aqua;
+}
+
+.learning-activity {
+  width: 100%;
+  height: 20%;
+  background-color: aquamarine;
+}
+
+.alarm {
+  width: 100%;
+  height: 15%;
+  background-color: blueviolet;
+}
+
+.chat-container {
+  width: 100%;
+  height: 65%;
+  background-color: white;
+  border-radius: 10px;
 }

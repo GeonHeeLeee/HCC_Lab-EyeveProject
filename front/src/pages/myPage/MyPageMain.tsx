@@ -29,8 +29,8 @@ function MypageMain({ handleCreateMeeting }: propsType) {
   // 참가 버튼 눌렀을 떄 socket에 입력받은 roomId와 userId 담아서 소켓 전송
   const handleEnterMeeting = (_: React.MouseEvent<HTMLButtonElement>) => {
     // const socket = new WebSocket('ws://localhost:8081/socket');
-    initSocket();
-    const socket = getSocket();
+    const socket = new WebSocket('ws://localhost:8081/socket');
+    dispatch(setSocket(socket));
 
     if (socket) {
       socket.onopen = function () {

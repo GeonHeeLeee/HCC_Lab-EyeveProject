@@ -67,9 +67,13 @@ function MyPage() {
     // const endpoint = 'http://localhost:8081'
     // const endpoint = process.env.REACT_APP_SERVER_API!;
 
-    initSocket();
+    const socket = new WebSocket('ws://localhost:8081/socket');
 
-    const socket = getSocket();
+    dispatch(setSocket(socket));
+
+    // initSocket();
+
+    // const socket = getSocket();
 
     if (socket) {
       socket.onopen = function () {

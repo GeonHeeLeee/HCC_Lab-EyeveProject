@@ -3,7 +3,6 @@ import { SocketState } from '../types/redux.type';
 
 const initialState: SocketState = {
   socket: null,
-  otherSockets: [],
 };
 
 export const socketSlice = createSlice({
@@ -11,7 +10,7 @@ export const socketSlice = createSlice({
   initialState,
   reducers: {
     setSocket: (state, action) => {
-      state.socket = action.payload.socket;
+      state.socket = action.payload;
     },
     clearSocket: (state) => {
       state.socket = null;
