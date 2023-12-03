@@ -1,5 +1,6 @@
 package hcclab.eyeveProject.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import hcclab.eyeveProject.domain.ChatMessage;
 import hcclab.eyeveProject.domain.ChatRoomMap;
 import hcclab.eyeveProject.domain.UserSession;
@@ -15,8 +16,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
+
 import java.io.IOException;
-import java.util.*;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +34,7 @@ public class ChatRoomService {
     private final ChatRoomMap chatRoomMap = ChatRoomMap.getInstance();
     private final Map<String, Rooms> RoomList = chatRoomMap.getRoomList();
     private final SignalingMessageService signalingMessageService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /*
     방 생성 메서드
@@ -48,7 +53,7 @@ public class ChatRoomService {
 
         //방마다 MediaPipeline 생성
         createdRoom.setMediaPipeline(kurentoClient.createMediaPipeline());
-        webRTCSignalingService.createWebRTCEp(createdRoom,userSession, chatMessage);
+        webRTCSignalingService.createWebRTCEp(createdRoom, userSession, chatMessage);
 
 
         roomRepository.save(createdRoom);
@@ -77,7 +82,7 @@ public class ChatRoomService {
         User findUser = userRepository.findById(userId);
         Rooms roomJoined = chatRoomMap.getRoomFromRoomList(roomName);
 
-        if(roomJoined != null) {
+        if (roomJoined != null) {
             findUser.setRoom(roomJoined);
             UserSession newUserSession = new UserSession(findUser, session, null);
 
@@ -107,7 +112,7 @@ public class ChatRoomService {
         String roomName = chatMessage.getRoomName();
         String senderId = chatMessage.getUserId();
         String receiverId = chatMessage.getReceiverId();
-        switch(chatMessage.getMessageType()){
+        switch (chatMessage.getMessageType()) {
             case CREATE:
                 String createdRoomName = createRoom(chatMessage, session);
                 signalingMessageService.sendMessageType(session, "CREATE", createdRoomName);
@@ -117,7 +122,7 @@ public class ChatRoomService {
                 Rooms joinedRoom = joinUser(chatMessage, session);
                 signalingMessageService.sendMessageType(session, "JOIN", roomName);
                 chatMessage.setMessage(senderId + "님이 입장하셨습니다.");
-                if(joinedRoom != null){
+                if (joinedRoom != null) {
 
 
                     //방에 있는 기존 사람들에게 새로 들어온 사람의 id 보내기
@@ -132,26 +137,27 @@ public class ChatRoomService {
                     //방에 있는 사람들이 새로 들어온 사람에 대해 WebRtcEndpoint 생성 후 downStream에 저장
                     joinedRoom.getUserInRoomList().values().stream()
                             .forEach(userSession -> {
-                                if (userSession.getUser().getUserId() != senderId) {
-                                    //기존 방에 있던 사람들이 새로운 사람의 endpoint 생성 후 연결
-                                    webRTCSignalingService.createDownStreamEndpoint(joinedRoom, userSession, chatMessage,senderSession);
-                                    //새로 들어온 사람이 기존 사람들의 endpoint 생성 후 연결
-                                    webRTCSignalingService.createDownStreamEndpoint(joinedRoom,senderSession,chatMessage, userSession);
+                                        if (userSession.getUser().getUserId() != senderId) {
+                                            //기존 방에 있던 사람들이 새로운 사람의 endpoint 생성 후 연결
+                                            webRTCSignalingService.createDownStreamEndpoint(joinedRoom, userSession, chatMessage, senderSession);
+                                            //새로 들어온 사람이 기존 사람들의 endpoint 생성 후 연결
+                                            webRTCSignalingService.createDownStreamEndpoint(joinedRoom, senderSession, chatMessage, userSession);
 
-                                }
-                            }
+                                        }
+                                    }
                             );
 
                 }
                 break;
 
-            case CHAT :
-                signalingMessageService.sendMessageType(session, "CHAT", null);
+            case CHAT:
+                //signalingMessageService.sendMessageType(session, "CHAT", null);
                 Rooms talkRoom = RoomList.get(roomName);
-                signalingMessageService.sendMessageExceptSelf(chatMessage.getMessage(),session, talkRoom);
+                String message = objectMapper.writeValueAsString(chatMessage);
+                signalingMessageService.sendMessageExceptSelf(message, session, talkRoom);
                 break;
 
-            case SDP_OFFER :
+            case SDP_OFFER:
                 //메세지 받을 때 방 이름도 같이 받아야 함 또한 userId도 받아야함
                 log.info("MessageType : SDP_OFFER");
                 log.info("sdpOffer Sender : " + senderId);
@@ -165,12 +171,12 @@ public class ChatRoomService {
                 break;
 
             case ICE_CANDIDATE:
-                log.info("MessageType : ICE_CANDIDATE, senderId: {}, receiverId: {}", chatMessage.getUserId(),chatMessage.getReceiverId());
+                log.info("MessageType : ICE_CANDIDATE, senderId: {}, receiverId: {}", chatMessage.getUserId(), chatMessage.getReceiverId());
                 Rooms iceRoom = RoomList.get(roomName);
 
                 WebRtcEndpoint iceWebRtcEndpoint = iceRoom.getUserInRoomList().get(senderId).getWebRtcEndpoint();
                 WebRtcEndpoint receiverWebRtcEndpoint = iceRoom.getUserInRoomList().get(senderId).getDownStreams().get(chatMessage.getReceiverId());
-                webRTCSignalingService.processIceCandidate(iceWebRtcEndpoint,receiverWebRtcEndpoint, chatMessage);
+                webRTCSignalingService.processIceCandidate(iceWebRtcEndpoint, receiverWebRtcEndpoint, chatMessage);
                 break;
 
             case RECEIVER_SDP_OFFER:
@@ -180,12 +186,12 @@ public class ChatRoomService {
 
                 Rooms room = RoomList.get(roomName);
                 UserSession senderUserSession = room.getUserInRoomList().get(senderId);
-                log.info("RECEIVER_SDP_OFFER : senderId - {}",senderUserSession.getUser().getUserId());
-                log.info("RECEIVER_SDP_OFFER : receiverId - {}",receiverId);
+                log.info("RECEIVER_SDP_OFFER : senderId - {}", senderUserSession.getUser().getUserId());
+                log.info("RECEIVER_SDP_OFFER : receiverId - {}", receiverId);
 
                 WebRtcEndpoint receiverEndpoint = senderUserSession.getDownStreams().get(receiverId);
-                log.info("RECEIVER_SDP_OFFER : {}의 DownStream - {}",senderUserSession.getUser().getUserId(),senderUserSession.getDownStreams().keySet());
-                webRTCSignalingService.processReceiverSdpOffer(senderUserSession,receiverEndpoint, chatMessage);
+                log.info("RECEIVER_SDP_OFFER : {}의 DownStream - {}", senderUserSession.getUser().getUserId(), senderUserSession.getDownStreams().keySet());
+                webRTCSignalingService.processReceiverSdpOffer(senderUserSession, receiverEndpoint, chatMessage);
                 break;
 
             case LEAVE:
@@ -236,7 +242,8 @@ public class ChatRoomService {
                         .collect(Collectors.toList())
                         .contains(webSocketSession))
                 .findAny()
-                .orElseThrow(() -> new NoSuchElementException("getRoomByWebSocketSession: 유저가 있는 방 없음"));;
+                .orElseThrow(() -> new NoSuchElementException("getRoomByWebSocketSession: 유저가 있는 방 없음"));
+        ;
         return foundRoom;
     }
 
@@ -269,8 +276,6 @@ public class ChatRoomService {
             }
         }
     }
-
-
 
 
 }
