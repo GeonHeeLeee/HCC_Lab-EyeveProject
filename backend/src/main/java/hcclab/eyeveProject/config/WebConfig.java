@@ -4,8 +4,6 @@ import hcclab.eyeveProject.interceptor.LoginInterceptor;
 import org.kurento.client.KurentoClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -20,7 +18,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins("http://localhost:3000")
-                .allowedMethods("OPTIONS","GET","POST","PUT","DELETE")
+                .allowedMethods("OPTIONS", "GET", "POST", "PUT", "DELETE")
                 .allowCredentials(true);
     }
 
@@ -31,7 +29,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new LoginInterceptor())
                 .addPathPatterns("/**")
-                .excludePathPatterns("/users","/users/login");
+                .excludePathPatterns("/users", "/users/login");
     }
 
     // Kurento Media Server 를 사용하기 위한 Bean 설정
@@ -39,7 +37,7 @@ public class WebConfig implements WebMvcConfigurer {
     // 아니면 에러남
     @Bean
     public KurentoClient kurentoClient() {
-        return KurentoClient.create();
+        return KurentoClient.create("ws://192.168.0.13:8888/kurento");
     }
 
 
