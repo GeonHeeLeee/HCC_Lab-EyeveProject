@@ -489,12 +489,9 @@ const UserVideo = () => {
           <FileShare />
         </div>
         <div className={styles['videos-container']}>
-          {users.map(
-            (user, index) => (
-              console.log(user.stream),
-              (<Video videoKey={index} stream={user.stream} />)
-            )
-          )}
+          {users.map((user, index) => (
+            <Video videoKey={index} stream={user.stream} />
+          ))}
         </div>
         <div className={styles['info']}>
           <div className={styles['professor-video-container']}>
@@ -511,7 +508,7 @@ const UserVideo = () => {
             <button onClick={leaveRoom}>방 나가기</button>
           </div>
           <div className={styles['chat-container']}>
-            <Chat roomId={loginUser.roomName} userId={loginUser.userId} />
+            {/* <Chat roomId={loginUser.roomName} userId={loginUser.userId} /> */}
           </div>
         </div>
       </div>
