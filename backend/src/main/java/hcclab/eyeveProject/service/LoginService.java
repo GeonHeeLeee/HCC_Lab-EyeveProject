@@ -22,10 +22,13 @@ public class LoginService {
      */
     @Transactional
     public boolean registerUser(User user) {
-        if(validateUser(user)) {return false;}
+        if (validateUser(user)) {
+            return false;
+        }
         userRepository.save(user);
         return true;
     }
+
     /*
     중복 유저 검사 메서드
     - 동일 아이디 존재 검사 후 해당 아이디의 유저 존재 시 true, 없을 시 false 반환
@@ -50,7 +53,7 @@ public class LoginService {
      */
     public User loginCheck(User user) {
         Optional<User> findUser = Optional.ofNullable(findUserById(user.getUserId()));
-        if(findUser.isPresent() && findUser.get().getUserPassword().equals(user.getUserPassword())){
+        if (findUser.isPresent() && findUser.get().getUserPassword().equals(user.getUserPassword())) {
             return findUser.get();
         }
         return null;

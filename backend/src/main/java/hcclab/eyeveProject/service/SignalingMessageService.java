@@ -8,7 +8,6 @@ import hcclab.eyeveProject.domain.UserSession;
 import hcclab.eyeveProject.entity.Rooms;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.IceCandidate;
-import org.kurento.client.WebRtcEndpoint;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -16,6 +15,7 @@ import org.springframework.web.socket.WebSocketSession;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
 @Slf4j
 @Service
 public class SignalingMessageService {
@@ -29,9 +29,9 @@ public class SignalingMessageService {
      */
     public String makeUserInRoomMessage(Rooms room) throws JsonProcessingException {
         Map<String, Object> json = new HashMap<>();
-        json.put("messageType","USERS_IN_ROOM");
-        json.put("users",room.getUserInRoomList().keySet());
-        log.info("USERS_IN_ROOM {}",room.getUserInRoomList().keySet());
+        json.put("messageType", "USERS_IN_ROOM");
+        json.put("users", room.getUserInRoomList().keySet());
+        log.info("USERS_IN_ROOM {}", room.getUserInRoomList().keySet());
         return objectMapper.writeValueAsString(json);
     }
 
@@ -42,8 +42,8 @@ public class SignalingMessageService {
      */
     public String makeUserEnterMessage(String enteredUserId) throws JsonProcessingException {
         Map<String, Object> json = new HashMap<>();
-        json.put("messageType","USER_ENTER");
-        json.put("userId",enteredUserId);
+        json.put("messageType", "USER_ENTER");
+        json.put("userId", enteredUserId);
         return objectMapper.writeValueAsString(json);
     }
 
@@ -104,17 +104,18 @@ public class SignalingMessageService {
     }
 
 
-
     /*
     요청 세션에게 messageType 재전송
     - front 처리를 위해 요청 세션에게 messageType을 재전송
     - 방 생성(CREATE)시, roomName도 함께 넣어서 전송
      */
-    public synchronized void sendMessageType(WebSocketSession session, String messageType, String roomName){
+    public synchronized void sendMessageType(WebSocketSession session, String messageType, String roomName) {
         Map<String, String> message = new HashMap<>();
         message.put("messageType", messageType);
         try {
-            if(messageType.equals("CREATE") || messageType.equals("JOIN")) {message.put("roomName", roomName);}
+            if (messageType.equals("CREATE") || messageType.equals("JOIN")) {
+                message.put("roomName", roomName);
+            }
             String jsonMessage = objectMapper.writeValueAsString(message);
             session.sendMessage(new TextMessage(jsonMessage));
         } catch (IOException e) {
