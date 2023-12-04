@@ -68,12 +68,11 @@ const UserVideo = () => {
   const leaveRoom = () => {
     console.log('leave room');
 
-    // if (localStreamRef.current) {
-    //   localStreamRef.current.getTracks().forEach(function (track) {
-    //     track.stop();
-    //   });
-    // }
-    dispatch(leaveRoomAction());
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(function (track) {
+        track.stop();
+      });
+    }
 
     socketRef.current?.send(
       JSON.stringify({
@@ -82,6 +81,7 @@ const UserVideo = () => {
         userId: loginUser.userId,
       })
     );
+    dispatch(leaveRoomAction());
     // useEffect에서 unmount 시 동작
     // if (socketRef.current) {
     //   closeSocket();
@@ -283,6 +283,14 @@ const UserVideo = () => {
 
   // 브라우저 나갔을 때
   window.onbeforeunload = () => {
+    socketRef.current?.send(
+      JSON.stringify({
+        messageType: 'LEAVE',
+        roomName: loginUser.roomName,
+        userId: loginUser.userId,
+      })
+    );
+    dispatch(leaveRoomAction());
     leaveRoom();
   };
 
@@ -500,6 +508,7 @@ const UserVideo = () => {
           <div className={styles['learning-activity']}></div>
           <div className={styles['alarm']}>
             <Button onClick={leaveRoom} children={'방 나가기 '} />
+            <button onClick={leaveRoom}>방 나가기</button>
           </div>
           <div className={styles['chat-container']}>
             <Chat roomId={loginUser.roomName} userId={loginUser.userId} />

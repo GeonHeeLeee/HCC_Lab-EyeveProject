@@ -37,7 +37,7 @@ public class WebConfig implements WebMvcConfigurer {
     // 아니면 에러남
     @Bean
     public KurentoClient kurentoClient() {
-        return KurentoClient.create("ws://192.168.0.13:8888/kurento");
+        return KurentoClient.create();
     }
 
 
