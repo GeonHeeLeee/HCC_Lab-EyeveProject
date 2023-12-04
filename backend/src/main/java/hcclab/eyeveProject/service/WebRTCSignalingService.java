@@ -1,6 +1,5 @@
 package hcclab.eyeveProject.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hcclab.eyeveProject.domain.ChatMessage;
 import hcclab.eyeveProject.domain.ChatRoomMap;
@@ -9,12 +8,12 @@ import hcclab.eyeveProject.domain.UserSession;
 import hcclab.eyeveProject.entity.Rooms;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.kurento.client.*;
+import org.kurento.client.IceCandidate;
+import org.kurento.client.WebRtcEndpoint;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 
@@ -62,8 +61,8 @@ public class WebRTCSignalingService {
         String senderId = message.getUserId();
         String receiverId = message.getReceiverId();
 
-        log.info("Sender({}) - Receiver({}) process Offer",senderId,receiverId);
-        log.info("processReceiverSdpOffer : rtcep - {}",receiverEndpoint);
+        log.info("Sender({}) - Receiver({}) process Offer", senderId, receiverId);
+        log.info("processReceiverSdpOffer : rtcep - {}", receiverEndpoint);
         String sdpAnswer = receiverEndpoint.processOffer(sdpOffer);
         //Receiver Sdp Answer 메세지 생성
         String jsonSdpAnswer = signalingMessageService.makeSdpAnswerMessage(sdpAnswer, senderId, receiverId);
@@ -76,17 +75,17 @@ public class WebRTCSignalingService {
     사용자로부터 받은 iceCandidate 메세지 처리
     - 해당 WebRtcEndpoint에 iceCandidate 등록
      */
-    public void processIceCandidate(WebRtcEndpoint webRtcEndpoint,WebRtcEndpoint receiverWebRtcEndpoint, ChatMessage message) {
+    public void processIceCandidate(WebRtcEndpoint webRtcEndpoint, WebRtcEndpoint receiverWebRtcEndpoint, ChatMessage message) {
         IceCandidatePayload payload = message.getIceCandidate();
         IceCandidate iceCandidate =
                 new IceCandidate(payload.getCandidate(), payload.getSdpMid(), payload.getSdpMLineIndex());
         log.info("processIceCandidate 함수 호출");
         //사용자 본인을 등록하는 경우
-        if(receiverWebRtcEndpoint == null) {
+        if (receiverWebRtcEndpoint == null) {
             webRtcEndpoint.addIceCandidate(iceCandidate);
         }
         //새로 들어오거나 기존에 있던 사람이 방에 있는 다른 사람을 등록하는 경우
-        else{
+        else {
             receiverWebRtcEndpoint.addIceCandidate(iceCandidate);
         }
     }
@@ -115,7 +114,7 @@ public class WebRTCSignalingService {
         addIceEventListener(receiverDownStream, senderSession, chatMessage);
         //DownStream에 추가
         senderSession.getDownStreams().put(receiverId, receiverDownStream);
-        log.info("createDownStreamEP - sender{}의 downstream : {}",senderSession.getUser().getUserId(),senderSession.getDownStreams().keySet());
+        log.info("createDownStreamEP - sender{}의 downstream : {}", senderSession.getUser().getUserId(), senderSession.getDownStreams().keySet());
         //sender에 receiver 연결
         senderSession.getWebRtcEndpoint().connect(receiverDownStream);
         receiverSession.getWebRtcEndpoint().connect(receiverDownStream);
@@ -132,9 +131,9 @@ public class WebRTCSignalingService {
             try {
                 IceCandidate iceCandidate = event.getCandidate();
                 String jsonMessage = signalingMessageService.makeIceCandidateMessage(iceCandidate, chatMessage);
-                synchronized (userSession.getWebSocketSession()) {
+                synchronized (userSession) {
                     userSession.getWebSocketSession().sendMessage(new TextMessage(jsonMessage));
-                    log.info("sender:{}, receiver:{}의 IceCandidate 전송 성공",chatMessage.getUserId(), chatMessage.getReceiverId());
+                    log.info("sender:{}, receiver:{}의 IceCandidate 전송 성공", chatMessage.getUserId(), chatMessage.getReceiverId());
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
