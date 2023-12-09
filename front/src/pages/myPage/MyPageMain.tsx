@@ -28,7 +28,9 @@ function MypageMain({ handleCreateMeeting }: propsType) {
 
   // 참가 버튼 눌렀을 떄 socket에 입력받은 roomId와 userId 담아서 소켓 전송
   const handleEnterMeeting = (_: React.MouseEvent<HTMLButtonElement>) => {
-    // const socket = new WebSocket('ws://localhost:8081/socket');
+    // const socket = new WebSocket(
+    //   'ws://31dd-203-229-61-35.ngrok-free.app/socket'
+    //   );
     const socket = new WebSocket('ws://localhost:8081/socket');
     dispatch(setSocket(socket));
 

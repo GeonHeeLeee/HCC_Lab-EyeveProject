@@ -64,16 +64,11 @@ function MyPage() {
   }, []);
 
   const handleCreateMeeting = () => {
-    // const endpoint = 'http://localhost:8081'
-    // const endpoint = process.env.REACT_APP_SERVER_API!;
-
+    // const socket = new WebSocket(
+    //   'ws://31dd-203-229-61-35.ngrok-free.app/socket'
+    // );
     const socket = new WebSocket('ws://localhost:8081/socket');
-
     dispatch(setSocket(socket));
-
-    // initSocket();
-
-    // const socket = getSocket();
 
     if (socket) {
       socket.onopen = function () {

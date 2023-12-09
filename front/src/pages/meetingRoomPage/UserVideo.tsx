@@ -16,6 +16,7 @@ import Button from '../../components/common/Button';
 import Chat from '../../components/meetingRoom/chat/Chat.componenet';
 import { useDispatch } from 'react-redux';
 import { leaveRoomAction } from '../../store/modules/loginUserSlice';
+import { type } from 'os';
 
 const pc_config = {
   iceServers: [
@@ -33,6 +34,11 @@ const pc_config = {
       ],
     },
   ],
+};
+
+type MessageType = {
+  userId: string;
+  message: string;
 };
 
 // TODO: 사용자가 방 퇴장했을 때 로직 구현
@@ -56,10 +62,16 @@ const UserVideo = () => {
 
   const [users, setUsers] = useState<Array<WebRTCUser>>([]);
 
+  // Chat 관련
+  const [message, setMessage] = useState('');
+  const [chatList, setChatList] = useState<Array<MessageType>>([]);
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const closeReiceivePC = useCallback((userId: string) => {
+    console.log(`close receive pc ${userId}`);
+
     if (!receivePCsRef.current[userId]) return;
     receivePCsRef.current[userId].close();
     delete receivePCsRef.current[userId];
@@ -67,6 +79,8 @@ const UserVideo = () => {
 
   const leaveRoom = () => {
     console.log('leave room');
+
+    users.forEach((user) => closeReiceivePC(user.userId));
 
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(function (track) {
@@ -83,13 +97,13 @@ const UserVideo = () => {
     );
     dispatch(leaveRoomAction());
     // useEffect에서 unmount 시 동작
-    // if (socketRef.current) {
-    //   closeSocket();
-    // }
-    // if (sendPCRef.current) {
-    //   sendPCRef.current.close();
-    // }
-    // users.forEach((user) => closeReiceivePC(user.userId));
+    if (socketRef.current) {
+      closeSocket();
+    }
+    if (sendPCRef.current) {
+      sendPCRef.current.close();
+    }
+
     navigate('/mypage');
   };
 
@@ -294,6 +308,26 @@ const UserVideo = () => {
     leaveRoom();
   };
 
+  // 채팅 관련 함수
+  const handleChatSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    console.log(message);
+
+    setChatList((prev) => {
+      return [...prev, { userId: loginUser.userId, message: message }];
+    });
+
+    socketRef.current?.send(
+      JSON.stringify({
+        roomName: loginUser.roomName,
+        userId: loginUser.userId,
+        messageType: 'CHAT',
+        message: message,
+      })
+    );
+    setMessage('');
+  };
+
   useEffect(() => {
     console.log(socketRef.current);
 
@@ -416,6 +450,14 @@ const UserVideo = () => {
             })(data);
             break;
 
+          case 'CHAT':
+            console.log(data);
+
+            setChatList((prev) => {
+              return [...prev, { userId: data.userId, message: data.message }];
+            });
+            break;
+
           default:
             console.log('error');
 
@@ -444,56 +486,22 @@ const UserVideo = () => {
     createReceivePC,
   ]);
 
-  // return (
-  // <main>
-  //   <div>
-  //     <div>
-  //       <FileShare />
-  //     </div>
-  //     <div className={styles.videoContainer}>
-  //       <div className={styles.localVideo}>
-  //         <video
-  //           style={{
-  //             width: 240,
-  //             height: 240,
-  //             backgroundColor: 'black',
-  //           }}
-  //           muted
-  //           ref={localVideoRef}
-  //           autoPlay
-  //         />
-  //       </div>
-
-  //       <div className={styles.receiverVideo}>
-  //         {users.map(
-  //           (user, index) => (
-  //             console.log(user.stream),
-  //             (<Video videoKey={index} stream={user.stream} />)
-  //           )
-  //         )}
-  //       </div>
-  //     </div>
-  //     <div>
-  //       {/* 오른쪽 여러 상태 창 */}
-  //       <button onClick={leaveRoom}>방 나가기</button>
-  //     </div>
-  //   </div>
-  //   <div>{/* 하단 바 */}</div>
-  // </main>
-  // );
-
   return (
     <main>
       <div className={styles['meetingroom-div']}>
+        {/* 화면공유 */}
         <div className={styles['screen-sharing']}>
           <FileShare />
         </div>
+        {/* 비디오 담는 부분 */}
         <div className={styles['videos-container']}>
           {users.map((user, index) => (
             <Video videoKey={index} stream={user.stream} />
           ))}
         </div>
+        {/* 오른쪽 정보들 */}
         <div className={styles['info']}>
+          {/* 교수자 화면 */}
           <div className={styles['professor-video-container']}>
             <video
               className={styles['professor-video']}
@@ -502,13 +510,43 @@ const UserVideo = () => {
               autoPlay
             />
           </div>
+          {/* 학습활동 */}
           <div className={styles['learning-activity']}></div>
+          {/* 학습 현황 */}
           <div className={styles['alarm']}>
             <Button onClick={leaveRoom} children={'방 나가기 '} />
-            <button onClick={leaveRoom}>방 나가기</button>
           </div>
+          {/* 채팅 */}
           <div className={styles['chat-container']}>
-            {/* <Chat roomId={loginUser.roomName} userId={loginUser.userId} /> */}
+            <div className={styles['chat-box']}>
+              <div className={styles['chat']}>
+                {chatList.map((chat) => {
+                  return (
+                    <div className={styles['users-chat']}>
+                      <div className={styles['writer']}>{chat.userId}</div>
+                      <div className={styles['reply']}>{chat.message}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className={styles['chat-input']}>
+              <form className={styles['chat-form']}>
+                <input
+                  type='text'
+                  placeholder='Type a message...'
+                  value={message}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    setMessage(e.target.value);
+                  }}
+                />
+                <button type='submit' onClick={handleChatSubmit}>
+                  전송
+                </button>
+
+                {/* <Button onClick={handleChatSubmit} children={'전송'} /> */}
+              </form>
+            </div>
           </div>
         </div>
       </div>
