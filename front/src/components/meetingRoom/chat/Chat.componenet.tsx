@@ -9,18 +9,20 @@ type ChatProps = {
   // socket: WebSocket | null | undefined;
   roomId: string | null;
   userId: string;
+  socketRef: React.MutableRefObject<WebSocket | null | undefined>;
 };
 
-const Chat = ({ roomId, userId }: ChatProps) => {
+const Chat = ({ data }: { data: ChatProps }) => {
   const [message, setMessage] = useState('');
-  const socket = useSelector((state: RootState) => state.socket.socket);
+  // const socket = useSelector((state: RootState) => state.socket.socket);
+  const { roomId, userId, socketRef } = data;
 
   const handleSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     console.log(message);
-    console.log(socket);
+    console.log(socketRef.current);
 
-    socket?.send(
+    socketRef.current?.send(
       JSON.stringify({
         roomName: roomId,
         userId: userId,
@@ -30,8 +32,8 @@ const Chat = ({ roomId, userId }: ChatProps) => {
     );
   };
 
-  if (socket) {
-    socket.onmessage = function (event) {
+  if (socketRef.current) {
+    socketRef.current.onmessage = function (event) {
       let msg = JSON.parse(event.data);
 
       switch (msg.messageType) {

@@ -4,8 +4,10 @@ import Styled from 'styled-components';
 const Container = Styled.div`
 
     width: 100%;
-    height: 16.67%;
+    height: 15%;
     border-radius: 1em;
+  margin-bottom: 1.67%;
+
 `;
 
 const VideoContainer = Styled.video`
@@ -13,7 +15,7 @@ const VideoContainer = Styled.video`
     width: 100%;
     height: 100%;
     background-color: black;
-    border-radius: 5px;
+    border-radius: 10px;
 `;
 
 interface Props {
