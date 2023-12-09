@@ -17,6 +17,7 @@ public class ChatRoomMap {
     - 하나만 존재해야 하므로 singleton으로 만듦
      */
     private static ChatRoomMap chatRoomMap = new ChatRoomMap();
+
     //생성된 방의 List - Map<roomName, Rooms>
     private Map<String, Rooms> RoomList = new HashMap<>();
 

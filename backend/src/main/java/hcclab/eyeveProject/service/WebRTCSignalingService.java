@@ -48,7 +48,6 @@ public class WebRTCSignalingService {
 
         webRtcEndpoint.gatherCandidates(); //ice 후보자 수집 - 이 부분이 잘 이해가 가지 않음
 
-
         log.info("sending SDP_ANSWER");
         userSession.getWebSocketSession().sendMessage(new TextMessage(jsonSdpAnswer));
     }

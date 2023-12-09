@@ -25,6 +25,4 @@ public class UserSession {
         this.downStreams = new HashMap<>();
     }
 
-
-    //이후 필요 시 sdp 정보, ice 정보 들도 넣어서 관리하면 좋을 듯
 }

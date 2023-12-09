@@ -3,30 +3,23 @@ package hcclab.eyeveProject.entity;
 import hcclab.eyeveProject.domain.UserSession;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.kurento.client.MediaPipeline;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.socket.WebSocketSession;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Transient;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
-@Entity
+
 @Getter
 @RequiredArgsConstructor
+@Entity
 public class Rooms {
 
-    @GeneratedValue @Id
-    private Long roomId;
-    private String roomName;
-    private LocalDateTime createdTime;
-
-    /*
-    해당 방에 있는 유저의 List
-    - <userId, UserSession> 저장
-    - DB에 등록하지 않으므로 @Transient
-     */
     @Transient
     private Map<String, UserSession> userInRoomList = new HashMap<>();
 
@@ -36,6 +29,19 @@ public class Rooms {
      */
     @Transient
     private MediaPipeline pipeline;
+
+    @GeneratedValue
+    @Id
+    private Long roomId;
+    private String roomName;
+    private LocalDateTime createdTime;
+
+    /*
+    해당 방에 있는 유저의 List
+    - <userId, UserSession> 저장
+    - DB에 등록하지 않으므로 @Transient
+     */
+
 
     /*
     Rooms 생성자
@@ -51,11 +57,11 @@ public class Rooms {
     /*
     userInRoomList에 <userId, UserSession> 추가
      */
-    public void addUserAndSession(String userId, UserSession userSession){
+    public void addUserAndSession(String userId, UserSession userSession) {
         userInRoomList.put(userId, userSession);
     }
 
-    public void setMediaPipeline(MediaPipeline mediaPipeline){
+    public void setMediaPipeline(MediaPipeline mediaPipeline) {
         this.pipeline = mediaPipeline;
     }
 }

@@ -55,7 +55,6 @@ public class ChatRoomService {
         createdRoom.setMediaPipeline(kurentoClient.createMediaPipeline());
         webRTCSignalingService.createWebRTCEp(createdRoom, userSession, chatMessage);
 
-
         roomRepository.save(createdRoom);
         createdRoom.addUserAndSession(userId, userSession);
         chatRoomMap.getRoomList().put(createdRoom.getRoomName(), createdRoom);
@@ -117,14 +116,11 @@ public class ChatRoomService {
                 String createdRoomName = createRoom(chatMessage, session);
                 signalingMessageService.sendMessageType(session, "CREATE", createdRoomName);
                 break;
-
             case JOIN:
                 Rooms joinedRoom = joinUser(chatMessage, session);
                 signalingMessageService.sendMessageType(session, "JOIN", roomName);
                 chatMessage.setMessage(senderId + "님이 입장하셨습니다.");
                 if (joinedRoom != null) {
-
-
                     //방에 있는 기존 사람들에게 새로 들어온 사람의 id 보내기
                     String userEnterMessage = signalingMessageService.makeUserEnterMessage(senderId);
                     signalingMessageService.sendMessageExceptSelf(userEnterMessage, session, joinedRoom);

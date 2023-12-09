@@ -17,7 +17,8 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:3000")
+                .allowedOriginPatterns("*")
+                //.allowedOrigins("http://localhost:3000")
                 .allowedMethods("OPTIONS", "GET", "POST", "PUT", "DELETE")
                 .allowCredentials(true);
     }
@@ -37,7 +38,7 @@ public class WebConfig implements WebMvcConfigurer {
     // 아니면 에러남
     @Bean
     public KurentoClient kurentoClient() {
-        return KurentoClient.create();
+        return KurentoClient.create("ws://223.194.46.120:20110/kurento");
     }
 
 
